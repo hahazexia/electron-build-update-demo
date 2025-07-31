@@ -1,0 +1,48 @@
+{
+  "name": "electron-update",
+  "version": "1.0.1",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder build",
+    "server": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "compare-versions": "^6.1.1",
+    "electron": "^37.2.4",
+    "electron-builder": "^26.0.12",
+    "koa": "^3.0.1",
+    "koa-range-static": "^1.3.0",
+    "koa-router": "^13.1.1",
+    "koa-static-server": "^1.5.2"
+  },
+  "build": {
+    "appId": "update.test",
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "http://127.0.0.1:33855/"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "createDesktopShortcut": "always"
+    },
+    "electronDownload": {
+      "mirror": "https://registry.npmmirror.com/binary.html?path=electron/"
+    },
+    "files": [
+      "!public"
+    ]
+  },
+  "dependencies": {
+    "electron-log": "^5.4.2",
+    "electron-updater": "^6.6.2"
+  }
+}
