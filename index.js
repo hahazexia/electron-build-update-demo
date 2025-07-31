@@ -5,6 +5,7 @@ const log = require('electron-log');
 
 autoUpdater.logger = log;
 autoUpdater.logger.transports.file.level = 'info';
+autoUpdater.autoInstallOnAppQuit = false;
 // autoUpdater.disableDifferentialDownload = true;
 log.info('App starting...');
 
@@ -25,7 +26,7 @@ const createWindow = () => {
   win.on('ready-to-show', () => {
     log.info('start check updates');
     autoUpdater.checkForUpdatesAndNotify();
-  })
+  });
 };
 
 function sendStatusToWindow(text) {
@@ -59,14 +60,15 @@ autoUpdater.on('download-progress', (progressObj) => {
 });
 autoUpdater.on('update-downloaded', (info) => {
   sendStatusToWindow('Update downloaded');
+  setTimeout(() => {
+    autoUpdater.quitAndInstall(true, true);
+  }, 4000);
 });
-
 
 ipcMain.on('v', (e) => {
   console.log(app.getVersion(), 'app.getVersion()');
   e.returnValue = app.getVersion();
 });
-
 
 ipcMain.on('check-update', (e) => {
   autoUpdater.checkForUpdatesAndNotify();
