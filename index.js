@@ -1,83 +1,103 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
-const { autoUpdater } = require('electron-updater');
-const log = require('electron-log');
+const { app, dialog } = require('electron');
+const log = require('./logger');
+const fs = require('node:fs');
 
-autoUpdater.logger = log;
-autoUpdater.logger.transports.file.level = 'info';
-autoUpdater.autoInstallOnAppQuit = false;
-// autoUpdater.disableDifferentialDownload = true;
-log.info('App starting...');
 
-let win;
+function getPackageInfo() {
+  try {
+    let pkgPath;
 
-const createWindow = () => {
-  win = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-    },
-  });
+    if (!app.isPackaged) {
+      pkgPath = path.join(__dirname, './package.json');
+    } else {
+      pkgPath = path.join(app.getAppPath(), 'package.json');
+    }
 
-  win.loadFile('index.html');
-  win.webContents.openDevTools();
-
-  win.on('ready-to-show', () => {
-    log.info('start check updates');
-    autoUpdater.checkForUpdatesAndNotify();
-  });
-};
-
-function sendStatusToWindow(text) {
-  log.info(text);
-  win.webContents.send('message', text);
+    const pkgContent = fs.readFileSync(pkgPath, 'utf8');
+    return JSON.parse(pkgContent);
+  } catch (error) {
+    log.error('读取package.json失败:', error);
+    return {
+      name: 'unknown-app',
+      version: '0.0.0'
+    };
+  }
 }
 
-autoUpdater.on('checking-for-update', () => {
-  sendStatusToWindow('Checking for update...');
-});
-autoUpdater.on('update-available', (info) => {
-  sendStatusToWindow('Update available.');
-});
-autoUpdater.on('update-not-available', (info) => {
-  sendStatusToWindow('Update not available.');
-});
-autoUpdater.on('error', (err) => {
-  sendStatusToWindow('Error in auto-updater. ' + err);
-});
-autoUpdater.on('download-progress', (progressObj) => {
-  let log_message = 'Download speed: ' + progressObj.bytesPerSecond;
-  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
-  log_message =
-    log_message +
-    ' (' +
-    progressObj.transferred +
-    '/' +
-    progressObj.total +
-    ')';
-  sendStatusToWindow(log_message);
-});
-autoUpdater.on('update-downloaded', (info) => {
-  sendStatusToWindow('Update downloaded');
-  setTimeout(() => {
-    autoUpdater.quitAndInstall(true, true);
-  }, 4000);
-});
+function findAsarFilesInResources() {
+  try {
+    const resourcesPath = path.dirname(app.getAppPath());
+    log.log('正在resources目录路径:', resourcesPath);
 
-ipcMain.on('v', (e) => {
-  console.log(app.getVersion(), 'app.getVersion()');
-  e.returnValue = app.getVersion();
-});
+    const files = fs.readdirSync(resourcesPath, { withFileTypes: true });
 
-ipcMain.on('check-update', (e) => {
-  autoUpdater.checkForUpdatesAndNotify();
-});
+    const asarFiles = files
+      .filter(item => !item.isDirectory() && item.name.includes('asar') && item.name !== 'app.asar')
+      .map(item => path.join(resourcesPath, item.name));
 
-app.whenReady().then(() => {
-  createWindow();
-});
+    log.log(`找到${asarFiles.length}个含asar的文件:`);
+    asarFiles.forEach(file => log.log(`- ${file}`));
 
-app.on('window-all-closed', () => {
+    return asarFiles;
+  } catch (error) {
+    log.error('获取asar文件失败:', error.message);
+    return [];
+  }
+}
+
+const pkg = getPackageInfo();
+log.info(pkg, 'pkg');
+
+let mainAppPath;
+
+// 本地开发环境直接加载main.js
+if (!app.isPackaged) {
+  mainAppPath = path.join(app.getAppPath(), 'main', 'main.js');
+} else {
+  // 用户安装后的生产环境加载主应用 asar 中的 main.js
+  log.info(pkg, 'pkg');
+  const resourcesPath = path.dirname(app.getAppPath());
+  mainAppPath = path.join(
+    resourcesPath,
+    `${pkg.name}-${pkg.version}.asar`,
+    'main.js'
+  );
+}
+
+
+try {
+  if (app.isPackaged) {
+    const asarFiles = findAsarFilesInResources();
+    log.info(asarFiles, 'asarFiles');
+    if (asarFiles.length > 1) {
+      const tmp = asarFiles.filter(i => i.includes('.tmp'))[0];
+      const old = asarFiles.filter(i => !i.includes('.tmp'))[0];
+      log.info(`tmp: ${tmp} old: ${old}`);
+      if (tmp && old) {
+        try {
+          fs.renameSync(tmp, tmp.replace('.tmp', ''));
+          fs.unlinkSync(old);
+        } catch (err) {
+          log.error(`fs.renameSync err: ${err}`);
+        }
+        log.info('更新主应用 asar 成功');
+      }
+    }
+  }
+
+  log.info('Loading main application from:', mainAppPath);
+  const mainModule = require(mainAppPath);
+  mainModule(log);
+} catch (error) {
+  log.error('Failed to load main application:', error);
+
+
+  dialog.showErrorBox(
+    '应用加载失败',
+    `无法加载主应用模块: ${error.message}\n请尝试重新安装应用`
+  );
+
+
   app.quit();
-});
+}

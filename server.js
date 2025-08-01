@@ -1,9 +1,6 @@
 const Koa = require('koa');
 const app = new Koa();
-const Router = require('koa-router');
 const serve = require('koa-static-server');
-const router = new Router();
-const compareVersions = require('compare-versions');
 const { rangeStatic } = require('koa-range-static');
 
 // app.use(
