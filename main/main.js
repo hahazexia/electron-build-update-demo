@@ -13,14 +13,25 @@ module.exports = async function (log) {
   log.info('App starting...');
   let win;
 
-  async function downloadAsarFile(url, targetDir, progressCallback, keepTmp = false) {
+  async function downloadAsarFile(
+    url,
+    targetDir,
+    progressCallback,
+    keepTmp = false
+  ) {
     try {
-      log.info(JSON.stringify({
-        url,
-        targetDir,
-        progressCallback,
-        keepTmp
-      }, undefined, 2));
+      log.info(
+        JSON.stringify(
+          {
+            url,
+            targetDir,
+            progressCallback,
+            keepTmp,
+          },
+          undefined,
+          2
+        )
+      );
       // 确保目标目录存在
       await fs.ensureDir(targetDir);
 
@@ -40,8 +51,8 @@ module.exports = async function (log) {
         responseType: 'stream',
         timeout: 30000,
         headers: {
-          'User-Agent': `Electron/${app.getVersion()} (${process.platform})`
-        }
+          'User-Agent': `Electron/${app.getVersion()} (${process.platform})`,
+        },
       });
 
       // 创建可写流，写入临时文件
@@ -63,7 +74,7 @@ module.exports = async function (log) {
         writer.on('finish', resolve);
         writer.on('error', (error) => {
           // 清理临时文件
-          fs.unlink(tmpFilePath).catch(() => { });
+          fs.unlink(tmpFilePath).catch(() => {});
           reject(new Error(`文件写入失败: ${error.message}`));
         });
       });
@@ -95,6 +106,53 @@ module.exports = async function (log) {
     }
   }
 
+  function findAsarFilesInResources() {
+    try {
+      const resourcesPath = path.dirname(app.getAppPath());
+      log.log('resources目录路径:', resourcesPath);
+
+      const files = fs.readdirSync(resourcesPath, { withFileTypes: true });
+
+      const asarFiles = files
+        .filter(
+          (item) =>
+            !item.isDirectory() &&
+            item.name.includes('asar') &&
+            item.name !== 'app.asar'
+        )
+        .map((item) => path.join(resourcesPath, item.name));
+
+      log.log(`找到${asarFiles.length}个含asar的文件:`);
+      asarFiles.forEach((file) => log.log(`- ${file}`));
+
+      return asarFiles;
+    } catch (error) {
+      log.error('获取asar文件失败:', error.message);
+      return [];
+    }
+  }
+
+  function getMajorPackageInfo(mainAsarPath) {
+    try {
+      let pkgPath;
+
+      if (!app.isPackaged) {
+        pkgPath = path.join(__dirname, './package.json');
+      } else {
+        pkgPath = path.join(mainAsarPath, 'package.json');
+      }
+
+      const pkgContent = fs.readFileSync(pkgPath, 'utf8');
+      return JSON.parse(pkgContent);
+    } catch (error) {
+      log.error('读取package.json失败:', error);
+      return {
+        name: 'unknown-app',
+        version: '0.0.0',
+      };
+    }
+  }
+
   const newUpdater = {
     check: async () => {
       const res = await axios.get('http://127.0.0.1:33855/update.json');
@@ -102,7 +160,22 @@ module.exports = async function (log) {
 
       const latest = res.data[0];
       log.info(latest, 'latest');
-      const currentVersion = app.getVersion();
+
+      const asarFiles = findAsarFilesInResources();
+      let currentVersion;
+      if (asarFiles.length === 1) {
+        const pkg = getMajorPackageInfo(asarFiles[0]);
+        currentVersion = pkg.version;
+      } else if (asarFiles.length > 1) {
+        const versionArr = asarFiles.map((i) => getMajorPackageInfo(i).version);
+        versionArr.sort((a, b) => compareVersion(a, b));
+        currentVersion = versionArr[versionArr.length - 1];
+      } else {
+        app.quit();
+      }
+      log.info(
+        `currentVersion: ${currentVersion} latest.version: ${latest.version}`
+      );
       const compareRes = compareVersion(latest.version, currentVersion);
 
       if (compareRes === 1) {
@@ -111,14 +184,21 @@ module.exports = async function (log) {
           autoUpdater.checkForUpdatesAndNotify();
         } else {
           log.info(`开始下载 asar 增量 ${latest.name}`);
-          const targetDir = app.isPackaged ? path.join(path.dirname(app.getAppPath())) : path.join(app.getAppPath());
-          const tempPath = await downloadAsarFile(`http://127.0.0.1:33855/${latest.name}`, targetDir, () => { }, true);
+          const targetDir = app.isPackaged
+            ? path.join(path.dirname(app.getAppPath()))
+            : path.join(app.getAppPath());
+          const tempPath = await downloadAsarFile(
+            `http://127.0.0.1:33855/${latest.name}`,
+            targetDir,
+            () => {},
+            true
+          );
           sendStatusToWindow('asar 增量下载成功');
         }
       } else {
         sendStatusToWindow('Update not available.');
       }
-    }
+    },
   };
 
   const createWindow = () => {
@@ -135,6 +215,7 @@ module.exports = async function (log) {
 
     win.on('ready-to-show', () => {
       log.info('start check updates');
+      log.info(app.isPackaged, 'app.isPackaged');
       if (app.isPackaged) {
         newUpdater.check();
       }
@@ -194,5 +275,4 @@ module.exports = async function (log) {
   app.on('window-all-closed', () => {
     app.quit();
   });
-
-}
+};

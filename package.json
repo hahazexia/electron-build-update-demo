@@ -47,8 +47,7 @@
       "!public",
       "!main",
       "!server.js",
-      "!afterPack.js",
-      "!*.asar"
+      "!afterPack.js"
     ],
     "extraResources": [
       {
@@ -64,6 +63,7 @@
   "dependencies": {
     "axios": "^1.11.0",
     "compare-version": "^0.1.2",
+    "date-fns": "^4.1.0",
     "electron-log": "^5.4.2",
     "electron-updater": "^6.6.2",
     "local-pkg": "^1.1.1"
