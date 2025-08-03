@@ -1,6 +1,6 @@
 {
   "name": "electron-update",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "scripts": {
     "start": "electron .",
@@ -46,23 +46,22 @@
       "index.js",
       "logger.js",
       "!public",
-      "!main",
-      "!server.js",
-      "!afterPack.js",
-      "!update.json",
+      "!.gitignore",
       "!package-lock.json",
-      "!.gitignore"
+      "!README.md",
+      "!server.js",
+      "!update.json",
+      "!asarUpdate.bat"
     ],
     "extraResources": [
       {
-        "from": "main",
-        "to": "${name}-${version}.asarfolder",
+        "from": "./asarUpdate.bat",
+        "to": "asarUpdate.bat",
         "filter": [
           "**/*"
         ]
       }
-    ],
-    "afterPack": "./afterPack.js"
+    ]
   },
   "dependencies": {
     "axios": "^1.11.0",
