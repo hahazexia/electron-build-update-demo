@@ -2,53 +2,7 @@ const path = require('node:path');
 const { app, dialog } = require('electron');
 const log = require('./logger');
 const fs = require('node:fs');
-
-function getMajorPackageInfo(mainAsarPath) {
-  try {
-    let pkgPath;
-
-    if (!app.isPackaged) {
-      pkgPath = path.join(__dirname, './package.json');
-    } else {
-      pkgPath = path.join(mainAsarPath, 'package.json');
-    }
-
-    const pkgContent = fs.readFileSync(pkgPath, 'utf8');
-    return JSON.parse(pkgContent);
-  } catch (error) {
-    log.error('读取package.json失败:', error);
-    return {
-      name: 'unknown-app',
-      version: '0.0.0',
-    };
-  }
-}
-
-function findAsarFilesInResources() {
-  try {
-    const resourcesPath = path.dirname(app.getAppPath());
-    log.log('resources目录路径:', resourcesPath);
-
-    const files = fs.readdirSync(resourcesPath, { withFileTypes: true });
-
-    const asarFiles = files
-      .filter(
-        (item) =>
-          !item.isDirectory() &&
-          item.name.includes('asar') &&
-          item.name !== 'app.asar'
-      )
-      .map((item) => path.join(resourcesPath, item.name));
-
-    log.log(`找到${asarFiles.length}个含asar的文件:`);
-    asarFiles.forEach((file) => log.log(`- ${file}`));
-
-    return asarFiles;
-  } catch (error) {
-    log.error('获取asar文件失败:', error.message);
-    return [];
-  }
-}
+const { getMajorPackageInfo, findAsarFilesInResources } = require('./utils.js');
 
 try {
   if (app.isPackaged) {
@@ -62,20 +16,20 @@ try {
         try {
           fs.renameSync(tmp, tmp.replace('.tmp', ''));
           fs.unlinkSync(old);
+          log.info('update main asar successful');
         } catch (err) {
           log.error(`fs.renameSync err: ${err}`);
         }
-        log.info('更新主应用 asar 成功');
       }
     }
   }
 
   let mainAppPath;
-  // 本地开发环境直接加载main.js
+  // dev enviroment directly load main.js
   if (!app.isPackaged) {
     mainAppPath = path.join(app.getAppPath(), 'main', 'main.js');
   } else {
-    // 用户安装后的生产环境加载主应用 asar 中的 main.js
+    // prod enviroment load main.js in main.asar
     const asarFiles = findAsarFilesInResources();
     const mainAsar = asarFiles[0];
     const pkg = getMajorPackageInfo(mainAsar);
