@@ -6,11 +6,12 @@ const { app } = require('electron');
 const { getMajorPackageInfo, findAsarFilesInResources } = require('./utils.js');
 const { autoUpdater } = require('electron-updater');
 
-exports.downloadAsarFile = async function downloadAsarFile(
+async function downloadAsarFile(
   url,
   targetDir,
   progressCallback,
-  keepTmp = false
+  keepTmp = false,
+  sendStatusToWindow
 ) {
   const log = global.log;
   try {
@@ -96,12 +97,15 @@ exports.downloadAsarFile = async function downloadAsarFile(
     }
 
     log.info(`asar download complete: ${finalFilePath}`);
+
+    sendStatusToWindow(`asar download complete: ${finalFilePath}`);
     return finalFilePath;
   } catch (error) {
     log.error('asar download failed:', error.message);
+    sendStatusToWindow('asar download failed:');
     throw error;
   }
-};
+}
 
 exports.asarUpdateCheck = async function asarUpdateCheck(sendStatusToWindow) {
   const log = global.log;
@@ -149,7 +153,8 @@ exports.asarUpdateCheck = async function asarUpdateCheck(sendStatusToWindow) {
         `http://127.0.0.1:33855/${latest.name}`,
         targetDir,
         () => {},
-        true
+        true,
+        sendStatusToWindow
       );
     }
     return 'asar';

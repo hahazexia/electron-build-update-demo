@@ -1,5 +1,11 @@
 [
   {
+    "version": "1.0.2",
+    "hash": "",
+    "type": "asar",
+    "name": "electron-update-1.0.2.asar"
+  },
+  {
     "version": "1.0.1",
     "hash": "",
     "type": "asar",

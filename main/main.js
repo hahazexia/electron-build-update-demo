@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('node:path');
 const { asarUpdateCheck, initFullUpdate } = require('./update.js');
+const { getMajorPackageInfo, findAsarFilesInResources } = require('./utils.js');
 
 module.exports = async function (log) {
   global.log = log;
@@ -37,13 +38,72 @@ module.exports = async function (log) {
   };
 
   ipcMain.on('v', (e) => {
-    console.log(app.getVersion(), 'app.getVersion()');
-    e.returnValue = app.getVersion();
+    const asarFiles = findAsarFilesInResources();
+    let currentVersion;
+    if (asarFiles.length === 1) {
+      const pkg = getMajorPackageInfo(asarFiles[0]);
+      currentVersion = pkg.version;
+    } else if (asarFiles.length > 1) {
+      const versionArr = asarFiles.map((i) => getMajorPackageInfo(i).version);
+      versionArr.sort((a, b) => compareVersion(a, b));
+      currentVersion = versionArr[versionArr.length - 1];
+    } else {
+      app.quit();
+    }
+    e.returnValue = currentVersion;
   });
 
   ipcMain.on('check-update', (e) => {
     autoUpdater.checkForUpdatesAndNotify();
   });
+
+  ipcMain.on('something', () => {
+    console.log('do something');
+  });
+
+  // ipcMain.on('something1', () => {
+  //   console.log('do something');
+  // });
+
+  // ipcMain.on('something2', () => {
+  //   console.log('do something');
+  // });
+
+  // ipcMain.on('something3', () => {
+  //   console.log('do something');
+  // });
+
+  // ipcMain.on('something4', () => {
+  //   console.log('do something');
+  // });
+
+  // ipcMain.on('something5', () => {
+  //   console.log('do something');
+  // });
+
+  // ipcMain.on('something6', () => {
+  //   console.log('do something');
+  // });
+
+  // ipcMain.on('something7', () => {
+  //   console.log('do something');
+  // });
+
+  // ipcMain.on('something8', () => {
+  //   console.log('do something');
+  // });
+
+  // ipcMain.on('something61', () => {
+  //   console.log('do something');
+  // });
+
+  // ipcMain.on('something71', () => {
+  //   console.log('do something');
+  // });
+
+  // ipcMain.on('something81', () => {
+  //   console.log('do something');
+  // });
 
   app.whenReady().then(() => {
     createWindow();
