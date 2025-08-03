@@ -141,7 +141,13 @@ exports.asarUpdateCheck = async function asarUpdateCheck(sendStatusToWindow) {
       const currentIndex = res.data.findIndex(
         (i) => i.version === currentVersion
       );
+      log.info('currentIndex', currentIndex);
       const filterData = res.data.slice(1, currentIndex);
+      log.info('filterData', filterData);
+      log.info(
+        `filterData.some((i) => i.type === 'full')`,
+        filterData.some((i) => i.type === 'full')
+      );
       if (filterData.some((i) => i.type === 'full')) {
         return 'full';
       }

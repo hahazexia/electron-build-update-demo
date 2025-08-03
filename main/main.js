@@ -25,11 +25,13 @@ module.exports = async function (log) {
     win.loadFile(path.join(__dirname, 'index.html'));
     win.webContents.openDevTools();
 
-    win.on('ready-to-show', () => {
+    win.on('ready-to-show', async () => {
       log.info('start check updates');
       log.info(app.isPackaged, 'app.isPackaged');
       if (app.isPackaged) {
-        const updataType = asarUpdateCheck(sendStatusToWindow);
+        const updataType = await asarUpdateCheck(sendStatusToWindow);
+        log.info('updataType', updataType);
+        log.info('autoUpdater', typeof autoUpdater);
         if (updataType === 'full') {
           autoUpdater.checkForUpdatesAndNotify();
         }
@@ -60,50 +62,6 @@ module.exports = async function (log) {
   ipcMain.on('something', () => {
     console.log('do something');
   });
-
-  // ipcMain.on('something1', () => {
-  //   console.log('do something');
-  // });
-
-  // ipcMain.on('something2', () => {
-  //   console.log('do something');
-  // });
-
-  // ipcMain.on('something3', () => {
-  //   console.log('do something');
-  // });
-
-  // ipcMain.on('something4', () => {
-  //   console.log('do something');
-  // });
-
-  // ipcMain.on('something5', () => {
-  //   console.log('do something');
-  // });
-
-  // ipcMain.on('something6', () => {
-  //   console.log('do something');
-  // });
-
-  // ipcMain.on('something7', () => {
-  //   console.log('do something');
-  // });
-
-  // ipcMain.on('something8', () => {
-  //   console.log('do something');
-  // });
-
-  // ipcMain.on('something61', () => {
-  //   console.log('do something');
-  // });
-
-  // ipcMain.on('something71', () => {
-  //   console.log('do something');
-  // });
-
-  // ipcMain.on('something81', () => {
-  //   console.log('do something');
-  // });
 
   app.whenReady().then(() => {
     createWindow();
