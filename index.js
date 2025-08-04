@@ -7,6 +7,16 @@ const {
 } = require('./update.js');
 const log = require('./logger.js');
 
+// 捕获未处理的同步异常
+process.on('uncaughtException', (error) => {
+  log.error('捕获到未处理的异常:', error);
+});
+
+// 捕获未处理的Promise拒绝
+process.on('unhandledRejection', (reason, promise) => {
+  log.error('捕获到未处理的Promise拒绝:', reason, promise);
+});
+
 log.info('App starting...');
 function sendStatusToWindow(text) {
   log.info(text);
@@ -37,10 +47,10 @@ const createWindow = () => {
     if (app.isPackaged) {
       const updataType = await asarUpdateCheck();
       log.info('updataType', updataType);
-      if (updataType === 'full') {
+      if (updataType.type === 'full') {
         autoUpdater.checkForUpdatesAndNotify();
-      } else if (updataType === 'asar') {
-        exitAndRunBatch();
+      } else if (updataType.type === 'asar') {
+        exitAndRunBatch(updataType.url);
       }
     }
   });

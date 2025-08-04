@@ -4,7 +4,8 @@ const path = require('node:path');
 const compareVersion = require('compare-version');
 const { app } = require('electron');
 const { autoUpdater } = require('electron-updater');
-const { spawn } = require('child_process');
+const { spawn, exec } = require('child_process');
+const iconv = require('iconv-lite');
 
 async function downloadAsarFile(
   url,
@@ -69,7 +70,7 @@ async function downloadAsarFile(
       writer.on('finish', resolve);
       writer.on('error', (error) => {
         // 清理临时文件
-        fs.unlink(tmpFilePath).catch(() => {});
+        fs.unlink(tmpFilePath).catch(() => { });
         reject(new Error(`download asar failed: ${error.message}`));
       });
     });
@@ -124,7 +125,10 @@ exports.asarUpdateCheck = async function asarUpdateCheck() {
     global.sendStatusToWindow('New Version found.');
     if (latest.type === 'full') {
       log.info('new version is full');
-      return 'full';
+      return {
+        type: 'full',
+        url: '',
+      };
     } else {
       log.info('new version is asar');
       // check if there is on full between latest and current, then will be full update not asar
@@ -139,7 +143,10 @@ exports.asarUpdateCheck = async function asarUpdateCheck() {
         filterData.some((i) => i.type === 'full')
       );
       if (filterData.some((i) => i.type === 'full')) {
-        return 'full';
+        return {
+          type: 'full',
+          url: '',
+        };
       }
       log.info(`start download asar update ${latest.name}`);
       const targetDir = app.isPackaged
@@ -148,50 +155,95 @@ exports.asarUpdateCheck = async function asarUpdateCheck() {
       await downloadAsarFile(
         `http://127.0.0.1:33855/${latest.name}`,
         targetDir,
-        () => {}
+        () => { }
       );
+      return {
+        type: 'asar',
+        url: path.join(targetDir, latest.name),
+      };
     }
-    return 'asar';
   } else {
     global.sendStatusToWindow('update not available.');
-    return false;
+    return {
+      type: 'null',
+      url: '',
+    };
   }
 };
 
-exports.exitAndRunBatch = function exitAndRunBatch() {
+exports.exitAndRunBatch = function exitAndRunBatch(newAsarPath) {
   const log = global.log;
-  const appPid = process.pid;
-  const resourcesPath = path.dirname(app.getAppPath());
-  const fullBatchPath = path.resolve(resourcesPath, './asarUpdate.bat');
-  const processName = path.basename(process.execPath);
+  try {
+    const exePath = process.execPath;
+    const resourcesPath = path.dirname(app.getAppPath());
+    const appAsarPath = path.join(resourcesPath, 'app.asar');
+    const batPath = path.join(resourcesPath, 'update.bat');
 
-  log.info(
-    `pid: ${appPid} fullBatchPath: ${fullBatchPath} processName: ${processName} resourcesPath: ${resourcesPath}`
-  );
-  let watcherScript = `
-      @echo off
+    log.info(`resourcesPath: ${resourcesPath}, newAsarPath: ${newAsarPath}, appAsarPath: ${appAsarPath}, exePath: ${exePath}`);
 
-      :: 等待主进程退出
-      :waitloop
-      tasklist /FI "PID eq ${appPid}" 2>NUL | find /I /N "${processName}">NUL
-      if "%ERRORLEVEL%"=="0" goto waitloop
+    const batContent = '@echo off\r\n' +
+      'chcp 936 >nul 2>&1\r\n' +
+      '\r\n' +
+      ':: 等待3秒确保主程序退出\r\n' +
+      'timeout /t 3 /nobreak >nul\r\n' +
+      '\r\n' +
+      ':: 循环等待文件释放并删除\r\n' +
+      'if exist "' + appAsarPath + '" (\r\n' +
+      '    :WAIT_DELETE\r\n' +
+      '    del "' + appAsarPath + '" >nul 2>&1\r\n' +
+      '    if %errorlevel% equ 0 (\r\n' +
+      '        goto DELETE_SUCCESS\r\n' +
+      '    ) else (\r\n' +
+      '        timeout /t 1 /nobreak >nul\r\n' +
+      '        goto WAIT_DELETE\r\n' +
+      '    )\r\n' +
+      ')\r\n' +
+      ':DELETE_SUCCESS\r\n' +
+      '\r\n' +
+      ':: 移动新文件\r\n' +
+      'move "' + newAsarPath + '" "' + appAsarPath + '"\r\n' +
+      '\r\n' +
+      ':: 重启应用\r\n' +
+      'start "" "' + exePath + '"\r\n' +
+      '\r\n' +
+      ':: 删除自身（必须放在最后）\r\n' +
+      'del "%~f0" >nul 2>&1\r\n';
 
-      :: 这里可以添加额外的延时，确保完全退出
-      timeout /t 2 /nobreak > NUL
+    const buffer = iconv.encode(batContent, 'gbk');
+    fs.writeFileSync(batPath, buffer);
 
-      :: 切换到resources目录并执行更新脚本
-      cd /d "${resourcesPath}"
-      call "${fullBatchPath}"
-    `;
+    const out = fs.openSync(path.join(resourcesPath, './out.log'), 'a');
+    const err = fs.openSync(path.join(resourcesPath, './out.log'), 'a');
 
-  const watcher = spawn('cmd.exe', ['/c', watcherScript], {
-    detached: true,
-    stdio: 'ignore',
-  });
+    const child = spawn(batPath, [], {
+      cwd: resourcesPath,
+      detached: true,
+      shell: true,
+      stdio: ['ignore', out, err],
+      windowsHide: true,
+    });
+    child.on('spawn', (e) => {
+      log.info('child process start successful');
+      app.quit();
+    });
+    child.on('error', (err) => {
+      log.error({
+        errorSummary: 'child failed',
+        message: err.message,
+        code: err.code,
+        signal: err.signal,
+        cmd: err.cmd,
+        stack: err.stack,
+      });
+    });
+    child.unref();
 
-  watcher.unref();
 
-  app.quit();
+    return true;
+  } catch (error) {
+    log.error('bat script run failed:', error);
+    return false;
+  }
 };
 
 exports.initFullUpdate = function fullUpdate() {
