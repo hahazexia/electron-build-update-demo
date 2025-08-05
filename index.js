@@ -8,7 +8,7 @@ const {
 const log = require('./logger.js');
 
 // 捕获未处理的同步异常
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   log.error('捕获到未处理的异常:', error);
 });
 
@@ -42,6 +42,10 @@ const createWindow = () => {
   win.webContents.openDevTools();
 
   win.on('ready-to-show', async () => {
+    new Array(40).fill(1).forEach(() => {
+      log.info('test log file archive override');
+      log.info('test log file archive override');
+    });
     log.info('start check updates');
     log.info(app.isPackaged, 'app.isPackaged');
     if (app.isPackaged) {
@@ -56,12 +60,12 @@ const createWindow = () => {
   });
 };
 
-ipcMain.on('v', (e) => {
+ipcMain.on('v', e => {
   let currentVersion = app.getVersion();
   e.returnValue = currentVersion;
 });
 
-ipcMain.on('check-update', (e) => {
+ipcMain.on('check-update', e => {
   autoUpdater.checkForUpdatesAndNotify();
 });
 
