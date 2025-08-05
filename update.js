@@ -4,7 +4,7 @@ const path = require('node:path');
 const compareVersion = require('compare-version');
 const { app } = require('electron');
 const { autoUpdater } = require('electron-updater');
-const { spawn, exec } = require('child_process');
+const { spawn } = require('child_process');
 const iconv = require('iconv-lite');
 
 async function downloadAsarFile(
@@ -27,20 +27,16 @@ async function downloadAsarFile(
         2
       )
     );
-    // 确保目标目录存在
     await fs.ensureDir(targetDir);
 
-    // 从URL中提取文件名并创建临时文件名
     const originalFileName = path.basename(url);
-    const tmpFileName = `${originalFileName}.tmp`; // 临时文件名
-    const tmpFilePath = path.join(targetDir, tmpFileName); // 临时文件路径
+    const tmpFileName = `${originalFileName}.tmp`;
+    const tmpFilePath = path.join(targetDir, tmpFileName);
     log.info(`tmpFilePath: ${tmpFilePath}`);
 
-    // 发送HEAD请求获取文件大小
     const headResponse = await axios.head(url);
     const fileSize = parseInt(headResponse.headers['content-length'], 10);
 
-    // 发送GET请求，以流的方式接收响应
     const response = await axios({
       url,
       method: 'GET',
@@ -51,13 +47,11 @@ async function downloadAsarFile(
       },
     });
 
-    // 创建可写流，写入临时文件
     const writer = fs.createWriteStream(tmpFilePath);
     response.data.pipe(writer);
 
-    // 监听下载进度
     let downloadedSize = 0;
-    response.data.on('data', (chunk) => {
+    response.data.on('data', chunk => {
       downloadedSize += chunk.length;
       const progress = fileSize ? downloadedSize / fileSize : 0;
       if (progressCallback && typeof progressCallback === 'function') {
@@ -65,17 +59,14 @@ async function downloadAsarFile(
       }
     });
 
-    // 等待文件写入完成
     await new Promise((resolve, reject) => {
       writer.on('finish', resolve);
-      writer.on('error', (error) => {
-        // 清理临时文件
-        fs.unlink(tmpFilePath).catch(() => { });
+      writer.on('error', error => {
+        fs.unlink(tmpFilePath).catch(() => {});
         reject(new Error(`download asar failed: ${error.message}`));
       });
     });
 
-    // 验证文件完整性
     const stats = await fs.stat(tmpFilePath);
     if (fileSize && stats.size !== fileSize) {
       await fs.unlink(tmpFilePath);
@@ -84,15 +75,12 @@ async function downloadAsarFile(
       );
     }
 
-    // 根据需求决定是否保留.tmp后缀
     let finalFilePath = tmpFilePath;
     if (!keepTmp) {
       finalFilePath = path.join(targetDir, originalFileName);
-      // 如果目标文件已存在，先删除
       if (await fs.pathExists(finalFilePath)) {
         await fs.unlink(finalFilePath);
       }
-      // 重命名临时文件为原始文件名
       await fs.rename(tmpFilePath, finalFilePath);
     }
 
@@ -133,16 +121,16 @@ exports.asarUpdateCheck = async function asarUpdateCheck() {
       log.info('new version is asar');
       // check if there is on full between latest and current, then will be full update not asar
       const currentIndex = res.data.findIndex(
-        (i) => i.version === currentVersion
+        i => i.version === currentVersion
       );
       log.info('currentIndex', currentIndex);
       const filterData = res.data.slice(1, currentIndex);
       log.info('filterData', filterData);
       log.info(
         `filterData.some((i) => i.type === 'full')`,
-        filterData.some((i) => i.type === 'full')
+        filterData.some(i => i.type === 'full')
       );
-      if (filterData.some((i) => i.type === 'full')) {
+      if (filterData.some(i => i.type === 'full')) {
         return {
           type: 'full',
           url: '',
@@ -155,7 +143,7 @@ exports.asarUpdateCheck = async function asarUpdateCheck() {
       await downloadAsarFile(
         `http://127.0.0.1:33855/${latest.name}`,
         targetDir,
-        () => { }
+        () => {}
       );
       return {
         type: 'asar',
@@ -179,18 +167,25 @@ exports.exitAndRunBatch = function exitAndRunBatch(newAsarPath) {
     const appAsarPath = path.join(resourcesPath, 'app.asar');
     const batPath = path.join(resourcesPath, 'update.bat');
 
-    log.info(`resourcesPath: ${resourcesPath}, newAsarPath: ${newAsarPath}, appAsarPath: ${appAsarPath}, exePath: ${exePath}`);
+    log.info(
+      `resourcesPath: ${resourcesPath}, newAsarPath: ${newAsarPath}, appAsarPath: ${appAsarPath}, exePath: ${exePath}`
+    );
 
-    const batContent = '@echo off\r\n' +
+    const batContent =
+      '@echo off\r\n' +
       'chcp 936 >nul 2>&1\r\n' +
       '\r\n' +
-      ':: 等待3秒确保主程序退出\r\n' +
+      ':: wait 3 seconds ensure main process exit\r\n' +
       'timeout /t 3 /nobreak >nul\r\n' +
       '\r\n' +
-      ':: 循环等待文件释放并删除\r\n' +
-      'if exist "' + appAsarPath + '" (\r\n' +
+      ':: loop wait asar file unlock\r\n' +
+      'if exist "' +
+      appAsarPath +
+      '" (\r\n' +
       '    :WAIT_DELETE\r\n' +
-      '    del "' + appAsarPath + '" >nul 2>&1\r\n' +
+      '    del "' +
+      appAsarPath +
+      '" >nul 2>&1\r\n' +
       '    if %errorlevel% equ 0 (\r\n' +
       '        goto DELETE_SUCCESS\r\n' +
       '    ) else (\r\n' +
@@ -200,13 +195,19 @@ exports.exitAndRunBatch = function exitAndRunBatch(newAsarPath) {
       ')\r\n' +
       ':DELETE_SUCCESS\r\n' +
       '\r\n' +
-      ':: 移动新文件\r\n' +
-      'move "' + newAsarPath + '" "' + appAsarPath + '"\r\n' +
+      ':: move new file\r\n' +
+      'move "' +
+      newAsarPath +
+      '" "' +
+      appAsarPath +
+      '"\r\n' +
       '\r\n' +
-      ':: 重启应用\r\n' +
-      'start "" "' + exePath + '"\r\n' +
+      ':: relaunch app\r\n' +
+      'start "" "' +
+      exePath +
+      '"\r\n' +
       '\r\n' +
-      ':: 删除自身（必须放在最后）\r\n' +
+      ':: delete bat script self\r\n' +
       'del "%~f0" >nul 2>&1\r\n';
 
     const buffer = iconv.encode(batContent, 'gbk');
@@ -222,11 +223,11 @@ exports.exitAndRunBatch = function exitAndRunBatch(newAsarPath) {
       stdio: ['ignore', out, err],
       windowsHide: true,
     });
-    child.on('spawn', (e) => {
+    child.on('spawn', e => {
       log.info('child process start successful');
       app.quit();
     });
-    child.on('error', (err) => {
+    child.on('error', err => {
       log.error({
         errorSummary: 'child failed',
         message: err.message,
@@ -237,7 +238,6 @@ exports.exitAndRunBatch = function exitAndRunBatch(newAsarPath) {
       });
     });
     child.unref();
-
 
     return true;
   } catch (error) {
@@ -256,16 +256,16 @@ exports.initFullUpdate = function fullUpdate() {
   autoUpdater.on('checking-for-update', () => {
     global.sendStatusToWindow('Checking for update...');
   });
-  autoUpdater.on('update-available', (info) => {
+  autoUpdater.on('update-available', info => {
     global.sendStatusToWindow('Update available.');
   });
-  autoUpdater.on('update-not-available', (info) => {
+  autoUpdater.on('update-not-available', info => {
     global.sendStatusToWindow('Update not available.');
   });
-  autoUpdater.on('error', (err) => {
+  autoUpdater.on('error', err => {
     global.sendStatusToWindow('Error in auto-updater. ' + err);
   });
-  autoUpdater.on('download-progress', (progressObj) => {
+  autoUpdater.on('download-progress', progressObj => {
     let log_message = 'Download speed: ' + progressObj.bytesPerSecond;
     log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
     log_message =
@@ -277,7 +277,7 @@ exports.initFullUpdate = function fullUpdate() {
       ')';
     global.sendStatusToWindow(log_message);
   });
-  autoUpdater.on('update-downloaded', (info) => {
+  autoUpdater.on('update-downloaded', info => {
     global.sendStatusToWindow('Update downloaded');
     setTimeout(() => {
       autoUpdater.quitAndInstall(true, true);

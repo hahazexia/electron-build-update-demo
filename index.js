@@ -7,12 +7,10 @@ const {
 } = require('./update.js');
 const log = require('./logger.js');
 
-// 捕获未处理的同步异常
 process.on('uncaughtException', error => {
   log.error('捕获到未处理的异常:', error);
 });
 
-// 捕获未处理的Promise拒绝
 process.on('unhandledRejection', (reason, promise) => {
   log.error('捕获到未处理的Promise拒绝:', reason, promise);
 });
@@ -42,10 +40,6 @@ const createWindow = () => {
   win.webContents.openDevTools();
 
   win.on('ready-to-show', async () => {
-    new Array(40).fill(1).forEach(() => {
-      log.info('test log file archive override');
-      log.info('test log file archive override');
-    });
     log.info('start check updates');
     log.info(app.isPackaged, 'app.isPackaged');
     if (app.isPackaged) {
