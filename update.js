@@ -97,7 +97,7 @@ async function downloadAsarFile(
 
 exports.asarUpdateCheck = async function asarUpdateCheck() {
   const log = global.log;
-  const res = await axios.get('http://127.0.0.1:33855/update.json');
+  const res = await axios.get(`${process.env.UPDATE_SERVER_URL}/update.json`);
   log.info(res.data, 'update.json res');
 
   const latest = res.data[0];
@@ -141,7 +141,7 @@ exports.asarUpdateCheck = async function asarUpdateCheck() {
         ? path.join(path.dirname(app.getAppPath()))
         : path.join(app.getAppPath());
       await downloadAsarFile(
-        `http://127.0.0.1:33855/${latest.name}`,
+        `${process.env.UPDATE_SERVER_URL}/${latest.name}`,
         targetDir,
         () => {}
       );
