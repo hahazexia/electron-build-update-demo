@@ -24,6 +24,9 @@
   },
   "build": {
     "appId": "update.test",
+    "directories": {
+      "output": "build"
+    },
     "publish": [
       {
         "provider": "generic",
@@ -52,8 +55,7 @@
       "!package-lock.json",
       "!README.md",
       "!server.js",
-      "!update.json",
-      "!asarUpdate.bat"
+      "!update.json"
     ]
   },
   "dependencies": {
