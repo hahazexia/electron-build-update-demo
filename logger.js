@@ -1,8 +1,8 @@
-const log = require('electron-log');
-const { app } = require('electron');
-const path = require('path');
-const { format } = require('date-fns');
-const fs = require('fs-extra');
+import log from 'electron-log';
+import { app } from 'electron';
+import path from 'node:path';
+import { format } from 'date-fns';
+import fs from 'fs-extra';
 
 let isInitialized = false;
 let fileLimit = 5;
@@ -81,4 +81,4 @@ function initLogger() {
   return log;
 }
 
-module.exports = initLogger();
+export default initLogger();

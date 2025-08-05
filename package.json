@@ -2,6 +2,7 @@
   "name": "electron-update",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "electron .",
     "build": "rimraf ./dist && electron-builder build",
@@ -47,6 +48,7 @@
     },
     "files": [
       "**/*",
+      ".env",
       "package.json",
       "index.js",
       "logger.js",

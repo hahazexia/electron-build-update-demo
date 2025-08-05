@@ -1,13 +1,15 @@
-const fs = require('fs-extra');
-const axios = require('axios');
-const path = require('node:path');
-const compareVersion = require('compare-version');
-const { app } = require('electron');
-const { autoUpdater } = require('electron-updater');
-const { spawn } = require('child_process');
-const iconv = require('iconv-lite');
+import fs from 'fs-extra';
+import axios from 'axios';
+import path from 'node:path';
+import compareVersion from 'compare-version';
+import { app } from 'electron';
+import electronUpdater from 'electron-updater';
+import { spawn } from 'child_process';
+import iconv from 'iconv-lite';
 
-async function downloadAsarFile(
+const { autoUpdater } = electronUpdater;
+
+export async function downloadAsarFile(
   url,
   targetDir,
   progressCallback,
@@ -95,8 +97,9 @@ async function downloadAsarFile(
   }
 }
 
-exports.asarUpdateCheck = async function asarUpdateCheck() {
+export async function asarUpdateCheck() {
   const log = global.log;
+  log.info(process.env.UPDATE_SERVER_URL, 'process.env.UPDATE_SERVER_URL');
   const res = await axios.get(`${process.env.UPDATE_SERVER_URL}/update.json`);
   log.info(res.data, 'update.json res');
 
@@ -157,9 +160,9 @@ exports.asarUpdateCheck = async function asarUpdateCheck() {
       url: '',
     };
   }
-};
+}
 
-exports.exitAndRunBatch = function exitAndRunBatch(newAsarPath) {
+export function exitAndRunBatch(newAsarPath) {
   const log = global.log;
   try {
     const exePath = process.execPath;
@@ -244,9 +247,9 @@ exports.exitAndRunBatch = function exitAndRunBatch(newAsarPath) {
     log.error('bat script run failed:', error);
     return false;
   }
-};
+}
 
-exports.initFullUpdate = function fullUpdate() {
+export function initFullUpdate() {
   const log = global.log;
   autoUpdater.logger = log;
   autoUpdater.logger.transports.file.level = 'info';
@@ -285,4 +288,4 @@ exports.initFullUpdate = function fullUpdate() {
   });
 
   return autoUpdater;
-};
+}

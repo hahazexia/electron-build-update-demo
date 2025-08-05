@@ -1,12 +1,15 @@
-require('dotenv').config();
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('node:path');
-const {
-  asarUpdateCheck,
-  initFullUpdate,
-  exitAndRunBatch,
-} = require('./update.js');
-const log = require('./logger.js');
+import dotenv from 'dotenv';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import path from 'node:path';
+import { fileURLToPath } from 'url';
+import { asarUpdateCheck, initFullUpdate, exitAndRunBatch } from './update.js';
+import log from './logger.js';
+
+dotenv.config({
+  path: app.isPackaged ? path.join(app.getAppPath(), '.env') : './.env',
+});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 process.on('uncaughtException', error => {
   log.error('捕获到未处理的异常:', error);
