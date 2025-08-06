@@ -12,7 +12,7 @@ dotenv.config({
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-process.on('uncaughtException', error => {
+process.on('uncaughtException', (error) => {
   log.error('catch unhandled error:', error);
 });
 
@@ -37,12 +37,12 @@ const createWindow = () => {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, 'preload.cjs'),
     },
   });
   global.win = win;
 
-  const html = path.join(__dirname, '../renderer/index.html');
+  const html = path.join(__dirname, 'index.html');
   log.info(html, 'html');
   win.loadFile(html);
   win.webContents.openDevTools();
@@ -62,12 +62,12 @@ const createWindow = () => {
   });
 };
 
-ipcMain.on('v', e => {
+ipcMain.on('v', (e) => {
   let currentVersion = app.getVersion();
   e.returnValue = currentVersion;
 });
 
-ipcMain.on('check-update', e => {
+ipcMain.on('check-update', (e) => {
   autoUpdater.checkForUpdatesAndNotify();
 });
 

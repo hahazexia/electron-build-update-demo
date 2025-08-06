@@ -1,3 +1,6 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 export function logErrorInfo(msg: string, error: any) {
   const log = global.log;
   log.error({
@@ -38,4 +41,33 @@ export function compareVersion(a: string, b: string) {
   }
 
   return 0;
+}
+
+export async function pathExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function ensureDir(dirPath: string): Promise<void> {
+  if (await pathExists(dirPath)) {
+    return;
+  }
+
+  const parentDir = path.dirname(dirPath);
+  // 防止根目录递归（处理类似 "/" 或 "C:\\" 这样的路径）
+  if (parentDir !== dirPath) {
+    await ensureDir(parentDir);
+  }
+
+  try {
+    await fs.mkdir(dirPath, { recursive: false });
+  } catch (err) {
+    if (err instanceof Error && 'code' in err && err.code !== 'EEXIST') {
+      throw err;
+    }
+  }
 }

@@ -1,30 +1,49 @@
-import { defineConfig } from 'vite';
+import { defineConfig, normalizePath } from 'vite';
 import path from 'path';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 const nodeBuiltins = [
+  'node:http',
+  'node:https',
   'node:fs',
+  'node:fs/promises',
   'node:path',
   'node:url',
-  'os',
-  'events',
-  'util',
   'node:child_process',
   'module',
-  'assert',
 ];
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      'node:fs': 'fs',
+      'node:http': 'http',
+      'node:https': 'https',
+    },
+  },
   root: path.resolve(__dirname, 'src/main'),
+  plugins: [
+    viteStaticCopy({
+      targets: [
+        {
+          src: normalizePath(path.resolve(__dirname, 'src/renderer/*')),
+          dest: './',
+        },
+      ],
+    }),
+  ],
   build: {
-    outDir: path.resolve(__dirname, 'dist/main'),
-    emptyOutDir: true,
+    outDir: path.resolve(__dirname, 'dist'),
+    emptyOutDir: false,
     target: 'node22',
     lib: {
-      entry: ['index.ts', 'preload.ts'],
+      entry: ['index.ts'],
       formats: ['es'],
-      fileName: (_, entryName) => `${entryName}.js`,
+      fileName: (format, entryName) => {
+        return `${entryName}.js`;
+      },
     },
     rollupOptions: {
       external: [...nodeBuiltins, 'electron'],
@@ -39,6 +58,7 @@ export default defineConfig({
         }),
       ],
       output: {
+        entryFileNames: 'index.js',
         format: 'es',
         banner: `import { createRequire } from 'module'; const require = createRequire(import.meta.url);`,
         externalLiveBindings: true,

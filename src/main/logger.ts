@@ -1,7 +1,7 @@
 import { app } from 'electron';
 import path from 'node:path';
 import { format } from 'date-fns';
-import * as fs from 'fs-extra';
+import fs from 'node:fs';
 // import log, { LogFile } from 'electron-log';
 // import * as log from 'electron-log';
 // import type { LogFile } from 'electron-log';
@@ -38,10 +38,10 @@ function initLogger(): any {
 
       const allFiles = fs
         .readdirSync(dir)
-        .filter(file => {
+        .filter((file) => {
           return file.startsWith(baseName) && file.endsWith(ext);
         })
-        .map(file => path.join(dir, file));
+        .map((file) => path.join(dir, file));
 
       const getFileIndex = (file: string) => {
         const name = path.parse(file).name;

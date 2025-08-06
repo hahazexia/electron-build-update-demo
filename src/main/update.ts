@@ -1,9 +1,15 @@
-import * as fs from 'fs-extra';
+import fs from 'node:fs';
+import fsp from 'node:fs/promises';
 import axios, { AxiosResponse } from 'axios';
 import path from 'node:path';
 import { app } from 'electron';
 import { spawn } from 'node:child_process';
-import { logErrorInfo, compareVersion } from './utils.js';
+import {
+  logErrorInfo,
+  compareVersion,
+  pathExists,
+  ensureDir,
+} from './utils.js';
 import { UpdateItem } from './types/update.js';
 
 const { autoUpdater } = require('electron-updater');
@@ -29,7 +35,7 @@ export async function downloadAsarFile(
         2
       )
     );
-    await fs.ensureDir(targetDir);
+    await ensureDir(targetDir);
 
     const originalFileName = path.basename(url);
     const tmpFileName = `${originalFileName}.tmp`;
@@ -42,36 +48,39 @@ export async function downloadAsarFile(
     const response = await axios({
       url,
       method: 'GET',
-      responseType: 'stream',
+      responseType: 'arraybuffer',
       timeout: 30000,
       headers: {
         'User-Agent': `Electron/${app.getVersion()} (${process.platform})`,
       },
+      onDownloadProgress: (progressEvent) => {
+        if (
+          progressEvent.total &&
+          progressCallback &&
+          typeof progressCallback === 'function'
+        ) {
+          const progress = progressEvent.loaded / progressEvent.total;
+          progressCallback(progress);
+        }
+      },
     });
 
-    const writer = fs.createWriteStream(tmpFilePath);
-    response.data.pipe(writer);
+    const buffer = Buffer.from(response.data);
 
-    let downloadedSize = 0;
-    response.data.on('data', (chunk: Buffer) => {
-      downloadedSize += chunk.length;
-      const progress = fileSize ? downloadedSize / fileSize : 0;
-      if (progressCallback && typeof progressCallback === 'function') {
-        progressCallback(progress);
+    try {
+      await fs.promises.writeFile(tmpFilePath, buffer);
+    } catch (error) {
+      try {
+        await fs.promises.unlink(tmpFilePath);
+      } catch (cleanupError) {
+        console.error('Cleanup failed after download error:', cleanupError);
       }
-    });
+      throw new Error(`download asar failed: ${(error as Error).message}`);
+    }
 
-    await new Promise((resolve: any, reject) => {
-      writer.on('finish', resolve);
-      writer.on('error', error => {
-        fs.unlink(tmpFilePath).catch(() => {});
-        reject(new Error(`download asar failed: ${error.message}`));
-      });
-    });
-
-    const stats = await fs.stat(tmpFilePath);
+    const stats = await fsp.stat(tmpFilePath);
     if (fileSize && stats.size !== fileSize) {
-      await fs.unlink(tmpFilePath);
+      await fsp.unlink(tmpFilePath);
       throw new Error(
         'downloaded asar file is incomplete and the size does not match'
       );
@@ -80,10 +89,10 @@ export async function downloadAsarFile(
     let finalFilePath = tmpFilePath;
     if (!keepTmp) {
       finalFilePath = path.join(targetDir, originalFileName);
-      if (await fs.pathExists(finalFilePath)) {
-        await fs.unlink(finalFilePath);
+      if (await pathExists(finalFilePath)) {
+        await fsp.unlink(finalFilePath);
       }
-      await fs.rename(tmpFilePath, finalFilePath);
+      await fsp.rename(tmpFilePath, finalFilePath);
     }
 
     log.info(`asar download complete: ${finalFilePath}`);
@@ -237,7 +246,7 @@ export function exitAndRunBatch(newAsarPath: string) {
       log.info('child process start successful');
       app.quit();
     });
-    child.on('error', err => {
+    child.on('error', (err) => {
       logErrorInfo('child process on error', err);
     });
     child.unref();

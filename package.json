@@ -1,16 +1,17 @@
 {
   "name": "electron-update",
   "version": "1.0.0",
-  "main": "dist/main/index.js",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
+    "build:es": "vite build --config vite.es.config.js",
+    "build:cjs": "vite build --config vite.cjs.config.js",
     "start": "electron .",
-    "dev": "rimraf ./dist && npm run dev:vite && electron .",
-    "dev:vite": "vite build",
-    "dev:electron": "wait-on dist/main/index.js && electron .",
-    "clean": "rimraf ./dist && rimraf ./out",
-    "build:vite": "vite build",
-    "build": "npm run clean && npm run build && electron-builder build",
+    "dev": "rimraf ./dist && npm run build:vite && electron .",
+    "clean": "rimraf ./dist",
+    "build:vite": "npm run clean && npm run build:es && npm run build:cjs",
+    "build:electron": "electron-builder build",
+    "build": "npm run build:vite && electron-builder build",
     "server": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -22,8 +23,11 @@
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@types/electron": "^1.4.38",
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.2.0",
+    "axios": "^1.11.0",
     "concurrently": "^9.2.0",
+    "date-fns": "^4.1.0",
     "electron": "^37.2.4",
     "electron-builder": "^26.0.12",
     "globby": "^14.1.0",
@@ -34,7 +38,8 @@
     "rimraf": "^6.0.1",
     "typescript": "^5.9.2",
     "vite": "^7.0.6",
-    "vite-plugin-electron": "^0.29.0"
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-static-copy": "^3.1.1"
   },
   "build": {
     "appId": "update.test",
@@ -68,17 +73,17 @@
       "!package-lock.json",
       "!README.md",
       "!server.js",
-      "!update.json"
+      "!update.json",
+      "!tsconfig.json",
+      "!vite.*.config.ts",
+      "!src"
     ]
   },
   "dependencies": {
-    "axios": "^1.11.0",
-    "date-fns": "^4.1.0",
     "dotenv": "^17.2.1",
     "electron-log": "^5.4.2",
     "electron-updater": "^6.6.2",
     "fs-extra": "^11.3.1",
-    "iconv-lite": "^0.6.3",
-    "local-pkg": "^1.1.1"
+    "iconv-lite": "^0.6.3"
   }
 }
