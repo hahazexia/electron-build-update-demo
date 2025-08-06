@@ -12,11 +12,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 process.on('uncaughtException', error => {
-  log.error('捕获到未处理的异常:', error);
+  log.error('catch unhandled error:', error);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  log.error('捕获到未处理的Promise拒绝:', reason, promise);
+  log.error('catch unhandled promise eject:', reason, promise);
 });
 
 log.info('App starting...');

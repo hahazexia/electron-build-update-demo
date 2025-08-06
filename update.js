@@ -6,6 +6,7 @@ import { app } from 'electron';
 import electronUpdater from 'electron-updater';
 import { spawn } from 'child_process';
 import iconv from 'iconv-lite';
+import { logErrorInfo } from './utils';
 
 const { autoUpdater } = electronUpdater;
 
@@ -90,8 +91,8 @@ export async function downloadAsarFile(
 
     global.sendStatusToWindow(`asar download complete: ${finalFilePath}`);
     return tmpFilePath;
-  } catch (error) {
-    log.error('asar download failed:', error.message, error.stack, error);
+  } catch (err) {
+    logErrorInfo('asar download failed error: ', err);
     global.sendStatusToWindow('asar download failed:');
     throw error;
   }
@@ -99,8 +100,16 @@ export async function downloadAsarFile(
 
 export async function asarUpdateCheck() {
   const log = global.log;
-  log.info(process.env.UPDATE_SERVER_URL, 'process.env.UPDATE_SERVER_URL');
-  const res = await axios.get(`${process.env.UPDATE_SERVER_URL}/update.json`);
+  let res;
+  try {
+    res = await axios.get(`${process.env.UPDATE_SERVER_URL}/update.json`);
+  } catch (err) {
+    logErrorInfo('asarUpdateCheck get request error', err);
+    return {
+      type: 'null',
+      url: '',
+    };
+  }
   log.info(res.data, 'update.json res');
 
   const latest = res.data[0];
@@ -122,7 +131,6 @@ export async function asarUpdateCheck() {
       };
     } else {
       log.info('new version is asar');
-      // check if there is on full between latest and current, then will be full update not asar
       const currentIndex = res.data.findIndex(
         i => i.version === currentVersion
       );
@@ -243,8 +251,8 @@ export function exitAndRunBatch(newAsarPath) {
     child.unref();
 
     return true;
-  } catch (error) {
-    log.error('bat script run failed:', error);
+  } catch (err) {
+    logErrorInfo('bat script run failed error: ', err);
     return false;
   }
 }
