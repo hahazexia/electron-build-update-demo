@@ -1,19 +1,18 @@
-import fs from 'fs-extra';
-import axios from 'axios';
+import * as fs from 'fs-extra';
+import axios, { AxiosResponse } from 'axios';
 import path from 'node:path';
-import compareVersion from 'compare-version';
 import { app } from 'electron';
-import electronUpdater from 'electron-updater';
-import { spawn } from 'child_process';
-import iconv from 'iconv-lite';
-import { logErrorInfo } from './utils';
+import { spawn } from 'node:child_process';
+import { logErrorInfo, compareVersion } from './utils.js';
+import { UpdateItem } from './types/update.js';
 
-const { autoUpdater } = electronUpdater;
+const { autoUpdater } = require('electron-updater');
+const iconv = require('iconv-lite');
 
 export async function downloadAsarFile(
-  url,
-  targetDir,
-  progressCallback,
+  url: string,
+  targetDir: string,
+  progressCallback: (progress: number) => void,
   keepTmp = false
 ) {
   const log = global.log;
@@ -54,7 +53,7 @@ export async function downloadAsarFile(
     response.data.pipe(writer);
 
     let downloadedSize = 0;
-    response.data.on('data', chunk => {
+    response.data.on('data', (chunk: Buffer) => {
       downloadedSize += chunk.length;
       const progress = fileSize ? downloadedSize / fileSize : 0;
       if (progressCallback && typeof progressCallback === 'function') {
@@ -62,7 +61,7 @@ export async function downloadAsarFile(
       }
     });
 
-    await new Promise((resolve, reject) => {
+    await new Promise((resolve: any, reject) => {
       writer.on('finish', resolve);
       writer.on('error', error => {
         fs.unlink(tmpFilePath).catch(() => {});
@@ -94,13 +93,13 @@ export async function downloadAsarFile(
   } catch (err) {
     logErrorInfo('asar download failed error: ', err);
     global.sendStatusToWindow('asar download failed:');
-    throw error;
+    throw err;
   }
 }
 
 export async function asarUpdateCheck() {
   const log = global.log;
-  let res;
+  let res: AxiosResponse;
   try {
     res = await axios.get(`${process.env.UPDATE_SERVER_URL}/update.json`);
   } catch (err) {
@@ -112,7 +111,7 @@ export async function asarUpdateCheck() {
   }
   log.info(res.data, 'update.json res');
 
-  const latest = res.data[0];
+  const latest: UpdateItem = res.data[0];
   log.info(latest, 'latest');
 
   let currentVersion = app.getVersion();
@@ -132,16 +131,16 @@ export async function asarUpdateCheck() {
     } else {
       log.info('new version is asar');
       const currentIndex = res.data.findIndex(
-        i => i.version === currentVersion
+        (i: UpdateItem) => i.version === currentVersion
       );
       log.info('currentIndex', currentIndex);
       const filterData = res.data.slice(1, currentIndex);
       log.info('filterData', filterData);
       log.info(
         `filterData.some((i) => i.type === 'full')`,
-        filterData.some(i => i.type === 'full')
+        filterData.some((i: UpdateItem) => i.type === 'full')
       );
-      if (filterData.some(i => i.type === 'full')) {
+      if (filterData.some((i: UpdateItem) => i.type === 'full')) {
         return {
           type: 'full',
           url: '',
@@ -170,7 +169,7 @@ export async function asarUpdateCheck() {
   }
 }
 
-export function exitAndRunBatch(newAsarPath) {
+export function exitAndRunBatch(newAsarPath: string) {
   const log = global.log;
   try {
     const exePath = process.execPath;
@@ -234,19 +233,12 @@ export function exitAndRunBatch(newAsarPath) {
       stdio: ['ignore', out, err],
       windowsHide: true,
     });
-    child.on('spawn', e => {
+    child.on('spawn', () => {
       log.info('child process start successful');
       app.quit();
     });
     child.on('error', err => {
-      log.error({
-        errorSummary: 'child failed',
-        message: err.message,
-        code: err.code,
-        signal: err.signal,
-        cmd: err.cmd,
-        stack: err.stack,
-      });
+      logErrorInfo('child process on error', err);
     });
     child.unref();
 
@@ -260,23 +252,22 @@ export function exitAndRunBatch(newAsarPath) {
 export function initFullUpdate() {
   const log = global.log;
   autoUpdater.logger = log;
-  autoUpdater.logger.transports.file.level = 'info';
   autoUpdater.autoInstallOnAppQuit = false;
   // autoUpdater.disableDifferentialDownload = true;
 
   autoUpdater.on('checking-for-update', () => {
     global.sendStatusToWindow('Checking for update...');
   });
-  autoUpdater.on('update-available', info => {
+  autoUpdater.on('update-available', () => {
     global.sendStatusToWindow('Update available.');
   });
-  autoUpdater.on('update-not-available', info => {
+  autoUpdater.on('update-not-available', () => {
     global.sendStatusToWindow('Update not available.');
   });
-  autoUpdater.on('error', err => {
+  autoUpdater.on('error', (err: Error) => {
     global.sendStatusToWindow('Error in auto-updater. ' + err);
   });
-  autoUpdater.on('download-progress', progressObj => {
+  autoUpdater.on('download-progress', (progressObj: any) => {
     let log_message = 'Download speed: ' + progressObj.bytesPerSecond;
     log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
     log_message =
@@ -288,7 +279,7 @@ export function initFullUpdate() {
       ')';
     global.sendStatusToWindow(log_message);
   });
-  autoUpdater.on('update-downloaded', info => {
+  autoUpdater.on('update-downloaded', () => {
     global.sendStatusToWindow('Update downloaded');
     setTimeout(() => {
       autoUpdater.quitAndInstall(true, true);

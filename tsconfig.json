@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "outDir": "dist/main",
+    "rootDir": "src/main",
+    "typeRoots": ["./node_modules/@types", "./src/main/types"],
+    "types": ["node", "electron"],
+    "skipLibCheck": true,
+    "allowUmdGlobalAccess": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["./src/main/**/*", "./src/main/types/global.d.ts"],
+  "exclude": ["node_modules", "dist", "src/main/renderer/*"]
+}

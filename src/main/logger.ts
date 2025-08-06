@@ -1,13 +1,16 @@
-import log from 'electron-log';
 import { app } from 'electron';
 import path from 'node:path';
 import { format } from 'date-fns';
-import fs from 'fs-extra';
+import * as fs from 'fs-extra';
+// import log, { LogFile } from 'electron-log';
+// import * as log from 'electron-log';
+// import type { LogFile } from 'electron-log';
+const log = require('electron-log');
 
 let isInitialized = false;
 let fileLimit = 5;
 
-function initLogger() {
+function initLogger(): any {
   if (isInitialized) {
     return log;
   }
@@ -20,15 +23,15 @@ function initLogger() {
     'logs',
     `app-${format(new Date(), 'yyyy-MM-dd')}.log`
   );
-  const archiveLog = filePath => {
+  const archiveLog = (filePath: any) => {
     try {
-      filePath = filePath.toString();
-      if (!fs.existsSync(filePath)) {
+      const filePathStr = filePath.toString();
+      if (!fs.existsSync(filePathStr)) {
         console.warn(`log file doesn't exists, skip the rotate: ${filePath}`);
         return;
       }
 
-      const info = path.parse(filePath);
+      const info = path.parse(filePathStr);
       const baseName = info.name;
       const ext = info.ext;
       const dir = info.dir;
@@ -40,7 +43,7 @@ function initLogger() {
         })
         .map(file => path.join(dir, file));
 
-      const getFileIndex = file => {
+      const getFileIndex = (file: string) => {
         const name = path.parse(file).name;
         const match = name.match(/\.(\d+)$/);
         return match ? parseInt(match[1], 10) : 0;

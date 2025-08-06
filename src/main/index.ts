@@ -1,12 +1,13 @@
-import dotenv from 'dotenv';
 import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from 'node:url';
 import { asarUpdateCheck, initFullUpdate, exitAndRunBatch } from './update.js';
 import log from './logger.js';
 
+const dotenv = require('dotenv');
+
 dotenv.config({
-  path: app.isPackaged ? path.join(app.getAppPath(), '.env') : './.env',
+  path: app.isPackaged ? path.join(app.getAppPath(), '.env') : '../../.env',
 });
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,16 +21,16 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 log.info('App starting...');
-function sendStatusToWindow(text) {
+function sendStatusToWindow(text: string) {
   log.info(text);
-  win.webContents.send('message', text);
+  win?.webContents.send('message', text);
 }
 
 global.log = log;
 global.sendStatusToWindow = sendStatusToWindow;
 
-const autoUpdater = initFullUpdate(sendStatusToWindow);
-let win;
+const autoUpdater = initFullUpdate();
+let win: BrowserWindow | null = null;
 
 const createWindow = () => {
   win = new BrowserWindow({
@@ -39,8 +40,11 @@ const createWindow = () => {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
+  global.win = win;
 
-  win.loadFile(path.join(__dirname, 'index.html'));
+  const html = path.join(__dirname, '../renderer/index.html');
+  log.info(html, 'html');
+  win.loadFile(html);
   win.webContents.openDevTools();
 
   win.on('ready-to-show', async () => {
