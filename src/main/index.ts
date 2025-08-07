@@ -5,8 +5,6 @@ import { asarUpdateCheck, initFullUpdate, exitAndRunBatch } from './update.js';
 import log from './logger.js';
 import dotenv from 'dotenv';
 
-// const dotenv = require('dotenv');
-
 dotenv.config({
   path: app.isPackaged ? path.join(app.getAppPath(), '.env') : '../../.env',
 });
