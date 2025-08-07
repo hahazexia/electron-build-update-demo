@@ -13,16 +13,16 @@ export function logErrorInfo(msg: string, error: any) {
   });
 }
 
-export function compareVersion(a: string, b: string) {
+export function compareVersion(v1: string, v2: string) {
   var i;
   var len;
 
-  if (typeof a + typeof b !== 'stringstring') {
+  if (typeof v1 + typeof v2 !== 'stringstring') {
     return false;
   }
 
-  a = a.split('.');
-  b = b.split('.');
+  let a = v1.split('.');
+  let b = v2.split('.');
   i = 0;
   len = Math.max(a.length, b.length);
 

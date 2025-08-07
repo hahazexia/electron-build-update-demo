@@ -12,7 +12,7 @@ export default defineConfig({
       entry: ['preload.ts'],
       formats: ['cjs'],
       fileName: (format, entryName) => {
-        return `${entryName}.cjs`;
+        return `${entryName}.js`;
       },
     },
     rollupOptions: {
@@ -24,7 +24,7 @@ export default defineConfig({
         }),
       ],
       output: {
-        entryFileNames: 'preload.cjs',
+        entryFileNames: 'preload.js',
         format: 'cjs',
       },
     },

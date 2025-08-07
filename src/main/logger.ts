@@ -3,9 +3,8 @@ import path from 'node:path';
 import { format } from 'date-fns';
 import fs from 'node:fs';
 // import log, { LogFile } from 'electron-log';
-// import * as log from 'electron-log';
-// import type { LogFile } from 'electron-log';
-const log = require('electron-log');
+// const log = require('electron-log');
+import log from 'electron-log';
 
 let isInitialized = false;
 let fileLimit = 5;
@@ -38,10 +37,10 @@ function initLogger(): any {
 
       const allFiles = fs
         .readdirSync(dir)
-        .filter((file) => {
+        .filter(file => {
           return file.startsWith(baseName) && file.endsWith(ext);
         })
-        .map((file) => path.join(dir, file));
+        .map(file => path.join(dir, file));
 
       const getFileIndex = (file: string) => {
         const name = path.parse(file).name;

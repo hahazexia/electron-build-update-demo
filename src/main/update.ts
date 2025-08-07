@@ -11,9 +11,10 @@ import {
   ensureDir,
 } from './utils.js';
 import { UpdateItem } from './types/update.js';
+import electronUpdater from 'electron-updater';
+import iconv from 'iconv-lite';
 
-const { autoUpdater } = require('electron-updater');
-const iconv = require('iconv-lite');
+const autoUpdater = electronUpdater.autoUpdater;
 
 export async function downloadAsarFile(
   url: string,
@@ -53,7 +54,7 @@ export async function downloadAsarFile(
       headers: {
         'User-Agent': `Electron/${app.getVersion()} (${process.platform})`,
       },
-      onDownloadProgress: (progressEvent) => {
+      onDownloadProgress: progressEvent => {
         if (
           progressEvent.total &&
           progressCallback &&
@@ -246,7 +247,7 @@ export function exitAndRunBatch(newAsarPath: string) {
       log.info('child process start successful');
       app.quit();
     });
-    child.on('error', (err) => {
+    child.on('error', err => {
       logErrorInfo('child process on error', err);
     });
     child.unref();

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "outDir": "./dist",
+    "module": "CommonJS",
+    "target": "ES6",
+    "moduleResolution": "Node",
+    "rootDir": "./src/main",
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["./src/main/preload.ts"],
+  "exclude": ["node_modules", "dist"]
+}

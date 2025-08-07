@@ -11,7 +11,11 @@
     "lib": ["ESNext", "DOM"],
     "outDir": "dist/main",
     "rootDir": "src/main",
-    "typeRoots": ["./node_modules/@types", "./src/main/types"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/**/*.d.ts",
+      "./src/main/types"
+    ],
     "types": ["node", "electron"],
     "skipLibCheck": true,
     "allowUmdGlobalAccess": true,

@@ -46,7 +46,14 @@ export default defineConfig({
       },
     },
     rollupOptions: {
-      external: [...nodeBuiltins, 'electron'],
+      external: [
+        ...nodeBuiltins,
+        'electron',
+        'electron-log',
+        'dotenv',
+        'electron-updater',
+        'iconv-lite',
+      ],
       plugins: [
         nodeResolve({
           preferBuiltins: true,
