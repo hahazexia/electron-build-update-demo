@@ -16,13 +16,6 @@ const nodeBuiltins = [
 ];
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      'node:fs': 'fs',
-      'node:http': 'http',
-      'node:https': 'https',
-    },
-  },
   root: path.resolve(__dirname, 'src/main'),
   plugins: [
     viteStaticCopy({
@@ -53,6 +46,9 @@ export default defineConfig({
         'dotenv',
         'electron-updater',
         'iconv-lite',
+        'better-sqlite3',
+        'typeorm',
+        'reflect-metadata',
       ],
       plugins: [
         nodeResolve({

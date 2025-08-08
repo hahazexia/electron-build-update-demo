@@ -58,7 +58,6 @@ export async function ensureDir(dirPath: string): Promise<void> {
   }
 
   const parentDir = path.dirname(dirPath);
-  // 防止根目录递归（处理类似 "/" 或 "C:\\" 这样的路径）
   if (parentDir !== dirPath) {
     await ensureDir(parentDir);
   }

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import axios, { AxiosResponse } from 'axios';
 import path from 'node:path';
-import { app } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { spawn } from 'node:child_process';
 import {
   logErrorInfo,
@@ -98,11 +98,11 @@ export async function downloadAsarFile(
 
     log.info(`asar download complete: ${finalFilePath}`);
 
-    global.sendStatusToWindow(`asar download complete: ${finalFilePath}`);
+    log.info(`asar download complete: ${finalFilePath}`);
     return tmpFilePath;
   } catch (err) {
     logErrorInfo('asar download failed error: ', err);
-    global.sendStatusToWindow('asar download failed:');
+    log.info('asar download failed:');
     throw err;
   }
 }
@@ -131,7 +131,7 @@ export async function asarUpdateCheck() {
 
   const compareRes = compareVersion(latest.version, currentVersion);
   if (compareRes === 1) {
-    global.sendStatusToWindow('New Version found.');
+    log.info('New Version found.');
     if (latest.type === 'full') {
       log.info('new version is full');
       return {
@@ -163,7 +163,13 @@ export async function asarUpdateCheck() {
       await downloadAsarFile(
         `${process.env.UPDATE_SERVER_URL}/${latest.name}`,
         targetDir,
-        () => {}
+        progessNum => {
+          const integer = Math.floor(progessNum * 100);
+          (global.win as BrowserWindow).webContents.send(
+            'incremental-download-progress',
+            integer
+          );
+        }
       );
       return {
         type: 'asar',
@@ -171,7 +177,7 @@ export async function asarUpdateCheck() {
       };
     }
   } else {
-    global.sendStatusToWindow('update not available.');
+    log.info('update not available.');
     return {
       type: 'null',
       url: '',
@@ -261,21 +267,22 @@ export function exitAndRunBatch(newAsarPath: string) {
 
 export function initFullUpdate() {
   const log = global.log;
+  (global as any).autoUpdater = autoUpdater;
   autoUpdater.logger = log;
   autoUpdater.autoInstallOnAppQuit = false;
   // autoUpdater.disableDifferentialDownload = true;
 
   autoUpdater.on('checking-for-update', () => {
-    global.sendStatusToWindow('Checking for update...');
+    log.info('Checking for update...');
   });
   autoUpdater.on('update-available', () => {
-    global.sendStatusToWindow('Update available.');
+    log.info('Update available.');
   });
   autoUpdater.on('update-not-available', () => {
-    global.sendStatusToWindow('Update not available.');
+    log.info('Update not available.');
   });
   autoUpdater.on('error', (err: Error) => {
-    global.sendStatusToWindow('Error in auto-updater. ' + err);
+    log.info('Error in auto-updater. ' + err);
   });
   autoUpdater.on('download-progress', (progressObj: any) => {
     let log_message = 'Download speed: ' + progressObj.bytesPerSecond;
@@ -287,10 +294,19 @@ export function initFullUpdate() {
       '/' +
       progressObj.total +
       ')';
-    global.sendStatusToWindow(log_message);
+    log.info(
+      `full update progressObj.percent: ${
+        progressObj.percent
+      } ${typeof progressObj.percent}`
+    );
+    const integer = Math.floor(progressObj.percent);
+    (global.win as BrowserWindow).webContents.send(
+      'incremental-download-progress',
+      integer
+    );
   });
   autoUpdater.on('update-downloaded', () => {
-    global.sendStatusToWindow('Update downloaded');
+    log.info('Update downloaded');
     setTimeout(() => {
       autoUpdater.quitAndInstall(true, true);
     }, 4000);

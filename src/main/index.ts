@@ -1,10 +1,16 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import 'reflect-metadata';
+import { app, BrowserWindow, Menu } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { asarUpdateCheck, initFullUpdate, exitAndRunBatch } from './update.js';
+import { initializeDatabase } from './db.js';
+import { initFullUpdate } from './update.js';
+import setupDbIpcEvents from './dbIpc.js';
+import setupIpcEvents from './ipc.js';
 import log from './logger.js';
 import dotenv from 'dotenv';
 
+log.info('App starting...');
+global.log = log;
 dotenv.config({
   path: app.isPackaged ? path.join(app.getAppPath(), '.env') : '../../.env',
 });
@@ -19,20 +25,15 @@ process.on('unhandledRejection', (reason, promise) => {
   log.error('catch unhandled promise eject:', reason, promise);
 });
 
-log.info('App starting...');
-function sendStatusToWindow(text: string) {
-  log.info(text);
-  win?.webContents.send('message', text);
-}
+Menu.setApplicationMenu(null);
 
-global.log = log;
-global.sendStatusToWindow = sendStatusToWindow;
-
-const autoUpdater = initFullUpdate();
-let win: BrowserWindow | null = null;
+await initializeDatabase();
+initFullUpdate();
+setupIpcEvents();
+setupDbIpcEvents();
 
 const createWindow = () => {
-  win = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
@@ -49,30 +50,8 @@ const createWindow = () => {
   win.on('ready-to-show', async () => {
     log.info('start check updates');
     log.info(app.isPackaged, 'app.isPackaged');
-    if (app.isPackaged) {
-      const updataType = await asarUpdateCheck();
-      log.info('updataType', updataType);
-      if (updataType.type === 'full') {
-        autoUpdater.checkForUpdatesAndNotify();
-      } else if (updataType.type === 'asar') {
-        exitAndRunBatch(updataType.url);
-      }
-    }
   });
 };
-
-ipcMain.on('v', e => {
-  let currentVersion = app.getVersion();
-  e.returnValue = currentVersion;
-});
-
-ipcMain.on('check-update', e => {
-  autoUpdater.checkForUpdatesAndNotify();
-});
-
-ipcMain.on('something', () => {
-  console.log('do something');
-});
 
 app.whenReady().then(() => {
   createWindow();

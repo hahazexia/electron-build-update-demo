@@ -9,22 +9,23 @@
     "dev:cjs": "tsc -p tsconfig.cjs.json",
     "dev:copy": "copyfiles -u 2 ./src/renderer/* ./dist",
     "dev:watch": "nodemon --watch ./src --ext ts,js,html,css --exec \"npm run dev\"",
-    "dev": "npm run clean && concurrently --prefix none \"npm run dev:ts\" \"npm run dev:cjs\" \"npm run dev:copy\" && electron .",
+    "dev": "npm run clean && npm run dev:ts && npm run dev:cjs && npm run dev:copy && electron .",
     "dev:vite": "npm run build:vite && electron .",
     "clean": "rimraf ./dist",
     "build:es": "vite build --config vite.es.config.js",
     "build:cjs": "vite build --config vite.cjs.config.js",
-    "build:vite": "npm run clean && concurrently --prefix none \"npm run build:es\" \"npm run build:cjs\"",
+    "build:vite": "npm run clean && npm run build:es && npm run build:cjs",
     "build:electron": "electron-builder build",
     "build": "npm run build:vite && electron-builder build",
-    "server": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "rebuild": "electron-rebuild -f -w better-sqlite3",
+    "server": "node server.js"
   },
   "author": "hahazexia",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "@electron/asar": "^4.0.0",
+    "@electron/rebuild": "^4.0.1",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@types/electron": "^1.4.38",
@@ -86,9 +87,12 @@
     ]
   },
   "dependencies": {
+    "better-sqlite3": "^11.10.0",
     "dotenv": "^17.2.1",
     "electron-log": "^5.4.2",
     "electron-updater": "^6.6.2",
-    "iconv-lite": "^0.6.3"
+    "iconv-lite": "^0.6.3",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.25"
   }
 }

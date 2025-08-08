@@ -1,40 +1,31 @@
-import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
+import {
+  UpsertConfig,
+  UpsertConfigRes,
+  GetConfigRes,
+  DeleteConfigRes,
+  DeleteAllConfigRes,
+} from './types/config.js';
 
-interface ExposedApi {
-  v: () => any;
-  send: (channel: string, data: any) => void;
-  receive: (channel: string, func: (...args: any[]) => void) => void;
-}
-
-const api: ExposedApi = {
-  v: () => ipcRenderer.sendSync('v'),
-  send: (channel: string, data: any) => {
-    ipcRenderer.send(channel, data);
+contextBridge.exposeInMainWorld('ipc', {
+  checkUpdate: (): void => {
+    ipcRenderer.send('check-update');
   },
-  receive: (channel: string, func: (...args: any[]) => void) => {
-    const listener = (_event: IpcRendererEvent, ...args: any[]) =>
-      func(...args);
-    ipcRenderer.on(channel, listener);
+  getVersion: (): string => ipcRenderer.sendSync('get-version'),
+  showUpdatePop: (callback: (val: boolean) => void): void => {
+    ipcRenderer.on('show-update-pop', (_, val: boolean) => callback(val));
   },
-};
-
-contextBridge.exposeInMainWorld('api', api);
-
-declare global {
-  interface Window {
-    api: ExposedApi;
-  }
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  const message = document.getElementById('message');
-
-  if (message) {
-    // 确保元素存在
-    ipcRenderer.on('message', (_event: IpcRendererEvent, value: string) => {
-      message.innerText = value;
-    });
-  } else {
-    console.warn('Element with id "message" not found');
-  }
+  incrementalDownloadProgress: (callback: (val: number) => void): void => {
+    ipcRenderer.on('incremental-download-progress', (_, val: number) =>
+      callback(val)
+    );
+  },
+  setConfig: (data: UpsertConfig): Promise<UpsertConfigRes> =>
+    ipcRenderer.invoke('upsert-config', data),
+  getConfig: (key: string): Promise<GetConfigRes> =>
+    ipcRenderer.invoke('get-config', key),
+  deleteConfig: (key: string): Promise<DeleteConfigRes> =>
+    ipcRenderer.invoke('delete-config', key),
+  deleteAllConfig: (): Promise<DeleteAllConfigRes> =>
+    ipcRenderer.invoke('delete-all-config'),
 });

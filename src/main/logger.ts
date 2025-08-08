@@ -2,8 +2,6 @@ import { app } from 'electron';
 import path from 'node:path';
 import { format } from 'date-fns';
 import fs from 'node:fs';
-// import log, { LogFile } from 'electron-log';
-// const log = require('electron-log');
 import log from 'electron-log';
 
 let isInitialized = false;

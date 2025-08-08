@@ -20,7 +20,9 @@
     "skipLibCheck": true,
     "allowUmdGlobalAccess": true,
     "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
   "include": ["./src/main/**/*", "./src/main/types/global.d.ts"],
   "exclude": ["node_modules", "dist", "src/main/renderer/*"]

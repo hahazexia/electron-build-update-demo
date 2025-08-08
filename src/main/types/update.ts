@@ -4,3 +4,8 @@ export interface UpdateItem {
   type: string;
   name: string;
 }
+
+export interface UpdateType {
+  type: string;
+  url?: string;
+}
