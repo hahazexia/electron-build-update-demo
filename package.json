@@ -23,6 +23,15 @@
   "author": "hahazexia",
   "license": "ISC",
   "description": "",
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "dotenv": "^17.2.1",
+    "electron-log": "^5.4.2",
+    "electron-updater": "^6.6.2",
+    "iconv-lite": "^0.6.3",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.25"
+  },
   "devDependencies": {
     "@electron/asar": "^4.0.0",
     "@electron/rebuild": "^4.0.1",
@@ -85,14 +94,5 @@
       "!vite.*.config.ts",
       "!src"
     ]
-  },
-  "dependencies": {
-    "better-sqlite3": "^11.10.0",
-    "dotenv": "^17.2.1",
-    "electron-log": "^5.4.2",
-    "electron-updater": "^6.6.2",
-    "iconv-lite": "^0.6.3",
-    "reflect-metadata": "^0.2.2",
-    "typeorm": "^0.3.25"
   }
 }
