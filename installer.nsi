@@ -1,3 +1,11 @@
+; Compression algorithm configuration (must be placed at the very beginning of the script)
+; Use LZMA algorithm with solid compression (highest compression ratio)
+SetCompressor /SOLID lzma
+
+; Set compression dictionary size (optional, range 4-64, unit: MB)
+; Larger values provide better compression but increase compression time, 16 or 32 recommended
+SetCompressorDictSize 32
+
 ; Installer configuration - Define basic software information (these are core settings you need to modify)
 !define PRODUCT_NAME "electron-update"  ; Need modification: Your software name
 !define PRODUCT_VERSION "1.0.0"       ; Need modification: Your software version number
