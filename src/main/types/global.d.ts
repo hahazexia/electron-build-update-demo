@@ -1,11 +1,12 @@
 import { BrowserWindow } from 'electron';
+import { DB } from '../db.ts';
 
 declare global {
   var log: any;
   var win: BrowserWindow | null;
   var autoUpdater: any;
   var sendStatusToWindow: (text: string) => void;
-  var db: DataSource;
+  var db: DB;
 
   interface Window {
     ipc: {

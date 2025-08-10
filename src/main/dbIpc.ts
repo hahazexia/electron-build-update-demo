@@ -16,8 +16,14 @@ export default function setupDbIpcEvents(): void {
     async (_, args: UpsertConfig): Promise<UpsertConfigRes> => {
       try {
         log.info('upsert-config');
-        const configRepository: ModelConstructor<any> =
+        const configRepository: ModelConstructor<any> | undefined =
           global.db.getTable('configs');
+        if (!configRepository) {
+          return {
+            msg: `upsert config failed, no such table`,
+            status: false,
+          };
+        }
         const upsertRes = await configRepository.upsert(args, {
           conflictPaths: ['key'],
           skipUpdateIfNoValuesChanged: true,
@@ -46,8 +52,15 @@ export default function setupDbIpcEvents(): void {
     async (_, args: string): Promise<GetConfigRes> => {
       try {
         log.info('get-config');
-        const configRepository: ModelConstructor<any> =
+        const configRepository: ModelConstructor<any> | undefined =
           global.db.getTable('configs');
+        if (!configRepository) {
+          return {
+            msg: `findOneBy config failed, no such table`,
+            status: false,
+            data: null,
+          };
+        }
         const findedConfig = await configRepository.findOneBy({
           key: args,
         });
@@ -75,8 +88,14 @@ export default function setupDbIpcEvents(): void {
     async (_, args: string): Promise<DeleteConfigRes> => {
       try {
         log.info('delete-config');
-        const configRepository: ModelConstructor<any> =
+        const configRepository: ModelConstructor<any> | undefined =
           global.db.getTable('configs');
+        if (!configRepository) {
+          return {
+            msg: `deleteOneBy config failed, no such table`,
+            status: false,
+          };
+        }
         const deleteRes = await configRepository.deleteOneBy({
           key: args,
         });
@@ -97,8 +116,14 @@ export default function setupDbIpcEvents(): void {
   ipcMain.handle('delete-all-config', async (): Promise<DeleteAllConfigRes> => {
     try {
       log.info('delete-all-config');
-      const configRepository: ModelConstructor<any> =
+      const configRepository: ModelConstructor<any> | undefined =
         global.db.getTable('configs');
+      if (!configRepository) {
+        return {
+          msg: `deleteAll config failed, no such table`,
+          status: false,
+        };
+      }
       const deleteRes = await configRepository.deleteAll();
 
       log.info(`delete all successful Res: ${deleteRes}`);

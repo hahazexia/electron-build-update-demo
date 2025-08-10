@@ -10,12 +10,12 @@ type TableMap = {
   configs: ConfigModel;
 };
 
-class DB {
+export class DB {
   db: sqlite.Database;
   tables: Map<keyof TableMap, ModelConstructor<any>> = new Map();
 
   constructor(dbPath: string, options: sqlite.Options) {
-    const db = new sqlite(dbPath, { verbose: global.log.info, ...options });
+    const db = new sqlite(dbPath, { verbose: console.log, ...options });
     this.db = db;
   }
 
@@ -26,8 +26,10 @@ class DB {
       this.tables.set(model.table as keyof TableMap, model);
     });
   }
-  getTable<K extends keyof TableMap>(name: K): TableMap[K] | undefined {
-    return this.tables.get(name) as TableMap[K] | undefined;
+  getTable<K extends keyof TableMap>(
+    name: K
+  ): ModelConstructor<any> | undefined {
+    return this.tables.get(name) as ModelConstructor<any> | undefined;
   }
 }
 
@@ -53,7 +55,7 @@ export function initializeDatabase(): null | DB {
   }
   let db;
   try {
-    db = new DB(getDatabasePath(), { verbose: console.log });
+    db = new DB(getDatabasePath(), { verbose: global.log.info });
     db.init([ConfigModel]);
   } catch (err) {
     logErrorInfo('db initialize failed', err);

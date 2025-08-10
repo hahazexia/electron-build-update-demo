@@ -34,6 +34,7 @@ export type ExtractData<T extends Schema> = {
 export type DataWithId<T> = T & { id: number };
 
 export type ModelConstructor<T extends Schema> = {
+  [x: string]: any;
   new (): TableModel<T>;
   db: sqlite.Database;
   table: string;
@@ -154,7 +155,7 @@ export abstract class TableModel<T extends Schema> {
     return result;
   }
 
-  private static findExistingByConflictPaths<T extends Schema>(
+  private findExistingByConflictPaths<T extends Schema>(
     this: ModelConstructor<T>,
     data: ExtractData<T>,
     conflictPaths: string[]
