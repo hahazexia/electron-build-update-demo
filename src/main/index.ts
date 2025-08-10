@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import { app, BrowserWindow, Menu } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,7 +26,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 Menu.setApplicationMenu(null);
 
-await initializeDatabase();
+initializeDatabase();
 initFullUpdate();
 setupIpcEvents();
 setupDbIpcEvents();

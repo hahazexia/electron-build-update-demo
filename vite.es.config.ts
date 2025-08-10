@@ -47,8 +47,6 @@ export default defineConfig({
         'electron-updater',
         'iconv-lite',
         'better-sqlite3',
-        'typeorm',
-        'reflect-metadata',
       ],
       plugins: [
         nodeResolve({
@@ -63,7 +61,6 @@ export default defineConfig({
       output: {
         entryFileNames: 'index.js',
         format: 'es',
-        banner: `import { createRequire } from 'module'; const require = createRequire(import.meta.url);`,
         externalLiveBindings: true,
         globals: {
           electron: 'electron',

@@ -7,8 +7,8 @@ import {
   DeleteConfigRes,
   DeleteAllConfigRes,
 } from './types/config.js';
-import { Config } from './entities/config.js';
 import { logErrorInfo } from './utils.js';
+import { ModelConstructor } from './orm.js';
 
 export default function setupDbIpcEvents(): void {
   ipcMain.handle(
@@ -16,18 +16,15 @@ export default function setupDbIpcEvents(): void {
     async (_, args: UpsertConfig): Promise<UpsertConfigRes> => {
       try {
         log.info('upsert-config');
-        const configRepository = global.db.getRepository(Config);
+        const configRepository: ModelConstructor<any> =
+          global.db.getTable('configs');
         const upsertRes = await configRepository.upsert(args, {
           conflictPaths: ['key'],
           skipUpdateIfNoValuesChanged: true,
         });
 
         log.info(
-          `upsert config successful upsertRes: ${JSON.stringify(
-            upsertRes,
-            () => {},
-            2
-          )}`
+          `upsert config successful upsertRes: ${JSON.stringify(upsertRes)}`
         );
 
         return {
@@ -49,12 +46,13 @@ export default function setupDbIpcEvents(): void {
     async (_, args: string): Promise<GetConfigRes> => {
       try {
         log.info('get-config');
-        const configRepository = global.db.getRepository(Config);
+        const configRepository: ModelConstructor<any> =
+          global.db.getTable('configs');
         const findedConfig = await configRepository.findOneBy({
           key: args,
         });
 
-        log.info(`get config: ${JSON.stringify(findedConfig, () => {}, 2)}`);
+        log.info(`get config: ${JSON.stringify(findedConfig)}`);
 
         return {
           status: true,
@@ -77,16 +75,14 @@ export default function setupDbIpcEvents(): void {
     async (_, args: string): Promise<DeleteConfigRes> => {
       try {
         log.info('delete-config');
-        const configRepository = global.db.getRepository(Config);
-        const configToDelete = await configRepository.findOneBy({
+        const configRepository: ModelConstructor<any> =
+          global.db.getTable('configs');
+        const deleteRes = await configRepository.deleteOneBy({
           key: args,
         });
-        if (configToDelete) {
-          await configRepository.remove(configToDelete);
-        }
         return {
           msg: '',
-          status: true,
+          status: deleteRes,
         };
       } catch (err: any) {
         logErrorInfo('delete config failed', err);
@@ -101,7 +97,8 @@ export default function setupDbIpcEvents(): void {
   ipcMain.handle('delete-all-config', async (): Promise<DeleteAllConfigRes> => {
     try {
       log.info('delete-all-config');
-      const configRepository = global.db.getRepository(Config);
+      const configRepository: ModelConstructor<any> =
+        global.db.getTable('configs');
       const deleteRes = await configRepository.deleteAll();
 
       log.info(`delete all successful Res: ${deleteRes}`);

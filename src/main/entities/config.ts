@@ -1,14 +1,40 @@
-import { Entity, Column, PrimaryGeneratedColumn, Unique } from 'typeorm';
+import { TableModel, ExtractData } from '../orm.js';
 
-@Entity()
-@Unique(['key'])
-export class Config {
-  @PrimaryGeneratedColumn()
-  id!: number;
-
-  @Column('text')
-  key!: string;
-
-  @Column('text')
-  value!: string;
+export class ConfigModel extends TableModel<ConfigSchema> {
+  static table = 'configs';
+  static schema: ConfigSchema = {
+    id: {
+      type: 'integer',
+      primary: true,
+      autoincrement: true,
+    },
+    key: {
+      type: 'text',
+      notNull: true,
+      unique: true,
+    },
+    value: {
+      type: 'text',
+      notNull: true,
+    },
+  };
 }
+
+type ConfigSchema = {
+  id: {
+    type: 'integer';
+    primary: true;
+    autoincrement: true;
+  };
+  key: {
+    type: 'text';
+    notNull: true;
+    unique: true;
+  };
+  value: {
+    type: 'text';
+    notNull: true;
+  };
+};
+
+export type ConfigData = ExtractData<ConfigSchema>;

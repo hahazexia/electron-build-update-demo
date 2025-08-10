@@ -1,3 +1,5 @@
+import { DataWithId, ExtractData } from '../orm.js';
+
 export interface UpsertConfig {
   key: string;
   value: string;
@@ -10,7 +12,7 @@ export interface UpsertConfigRes {
 
 export interface GetConfigRes {
   status: boolean;
-  data: UpsertConfig | null;
+  data: DataWithId<ExtractData<any>> | null;
   msg: string;
 }
 
