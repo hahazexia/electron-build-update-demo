@@ -1,22 +1,49 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hello from Electron renderer!</title>
+    <style>
+      #check-update {
+        cursor: pointer;
+      }
+    </style>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
-  <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'" />
-  <title>Hello from Electron renderer!</title>
-  <link rel="stylesheet" href="./style.css">
-</head>
+  <body>
+    <button id="check-update">检查更新</button>
+    <h1>Hello from Electron renderer!</h1>
+    <p>👋</p>
+    <div id="version"></div>
+    <div id="message"></div>
+    <button id="synth-btn">语音播报demo</button>
+  </body>
+  <script>
+    const temp = window.ipc.getVersion();
+    const version = document.getElementById('version');
+    version.innerHTML = temp;
 
-<body>
-  <div id="check-update">检查更新</div>
-  <h1>Hello from Electron renderer!</h1>
-  <p>👋</p>
-  <div id="version"></div>
-  <div id="message"></div>
-</body>
-<script src="./renderer.js"></script>
+    const btn = document.getElementById('check-update');
+    btn.addEventListener('click', () => {
+      window.ipc?.checkUpdate();
+    });
+    (async () => {
+      const res = await window.ipc?.setConfig({
+        key: 'test_key',
+        value: '测试',
+      });
+      console.log(res, 'upsert res 插入数据库res');
 
+      const res2 = await window.ipc?.getConfig('test_key');
+      console.log(res2, 'getConfig res2');
+
+      const res3 = await window.ipc?.deleteConfig('test_key');
+      console.log(res3, 'deleteConfig res3');
+    })();
+
+    const synthBtn = document.getElementById('synth-btn');
+    synthBtn.addEventListener('click', () => {
+      window.ipc?.openSynthWindow();
+    });
+  </script>
 </html>

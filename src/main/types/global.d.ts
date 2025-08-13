@@ -4,6 +4,7 @@ import { DB } from '../db.ts';
 declare global {
   var log: any;
   var win: BrowserWindow | null;
+  var synthWin: BrowserWindow | null;
   var autoUpdater: any;
   var sendStatusToWindow: (text: string) => void;
   var db: DB;

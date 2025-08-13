@@ -28,4 +28,13 @@ contextBridge.exposeInMainWorld('ipc', {
     ipcRenderer.invoke('delete-config', key),
   deleteAllConfig: (): Promise<DeleteAllConfigRes> =>
     ipcRenderer.invoke('delete-all-config'),
+  openSynthWindow: (): void => ipcRenderer.send('open-synth-window'),
+  execWinSynthShell: (): void =>
+    ipcRenderer.send('exec-win-synth-shell-voices'),
+  winSynthShellVoices: (callback: (val: string[]) => void): void => {
+    ipcRenderer.on('win-synth-shell-voices', (_, val: any) => callback(val));
+  },
+  execWinSynthShellSpeak: (data: any): void => {
+    ipcRenderer.send('exec-win-synth-shell-speak', data);
+  },
 });
