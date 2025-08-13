@@ -90,7 +90,13 @@
       "!update.json",
       "!tsconfig.json",
       "!vite.*.config.ts",
-      "!src"
+      "!src",
+      "!*.exe",
+      "!*.ico",
+      "!installer.nsi",
+      "!License.txt",
+      "!Readme.txt",
+      "!tsconfig.*.json"
     ]
   }
 }
