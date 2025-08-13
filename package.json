@@ -68,8 +68,7 @@
       }
     ],
     "win": {
-      "target": "nsis",
-      "requestedExecutionLevel": "requireAdministrator"
+      "target": "nsis"
     },
     "nsis": {
       "createDesktopShortcut": "always",
