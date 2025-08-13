@@ -95,6 +95,21 @@
       #winPlay {
         margin-top: 10px;
       }
+      .win .range {
+        overflow: hidden;
+        line-height: 1.5;
+        padding: 5px;
+        margin-bottom: 5px;
+      }
+      .win .range label {
+        float: left;
+        width: 20%;
+        line-height: 1.5;
+      }
+      .win .range input {
+        float: right;
+        width: 78%;
+      }
     </style>
   </head>
 
@@ -132,6 +147,15 @@
       <select id="winVoiceSelect"></select>
 
       <button id="winPlay">Play</button>
+
+      <div class="range">
+        <label>Rate: <span id="rateValue">0</span></label>
+        <input type="range" id="rateSlider" min="-10" max="10" value="0" />
+      </div>
+      <div class="range">
+        <label>Volumn: <span id="volumeValue">100</span></label>
+        <input type="range" id="volumeSlider" min="0" max="100" value="100" />
+      </div>
     </div>
     <script>
       const synth = window.speechSynthesis;
@@ -240,6 +264,29 @@
       const winSynthShellBtn = document.getElementById('winSynthShellBtn');
       const winVoiceSelect = document.querySelector('#winVoiceSelect');
       const winPlay = document.getElementById('winPlay');
+      const rateSlider = document.getElementById('rateSlider');
+      const volumeSlider = document.getElementById('volumeSlider');
+      const rateValueWin = document.getElementById('rateValue');
+      const volumeValue = document.getElementById('volumeValue');
+
+      let userSetting = {
+        rate: 0,
+        volumn: 100,
+      };
+
+      rateSlider.addEventListener('input', e => {
+        const rate = parseInt(e.target.value);
+        rateValueWin.textContent = rate;
+        userSetting.rate = parseInt(rateSlider.value);
+      });
+
+      volumeSlider.addEventListener('input', e => {
+        const volume = parseInt(e.target.value);
+        volumeValue.textContent = volume;
+
+        userSetting.volumn = parseInt(volumeSlider.value);
+      });
+
       let currentWinVoice = '';
       window.ipc?.winSynthShellVoices(data => {
         console.log('winSynthShellVoices', data);
@@ -260,6 +307,8 @@
         window.ipc?.execWinSynthShellSpeak({
           text: inputTxt.value,
           voice: currentWinVoice,
+          rate: userSetting.rate,
+          volume: userSetting.volumn,
         });
       });
       window.ipc?.execWinSynthShell();

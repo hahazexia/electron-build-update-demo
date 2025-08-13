@@ -75,6 +75,8 @@ export default function setupIpcEvents(): void {
   });
   ipcMain.on('exec-win-synth-shell-speak', (_, data): void => {
     const { text, voice = undefined, rate = 0, volume = 100 } = data;
+    const logStr = `text: ${text} voice: ${voice} rate: ${rate} volume: ${volume}`;
+    log.info(logStr);
 
     const escapedText = text.replace(/'/g, "''").replace(/\$/g, '`$');
     const escapedVoice = voice
