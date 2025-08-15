@@ -8,8 +8,27 @@ import setupIpcEvents from './ipc.js';
 import log from './logger.js';
 import dotenv from 'dotenv';
 
+const gotTheLock = app.requestSingleInstanceLock({
+  data: 'second instance',
+});
+
+if (!gotTheLock) {
+  app.quit();
+} else {
+  app.on(
+    'second-instance',
+    (event, commandLine, workingDirectory, additionalData) => {
+      if (global.win) {
+        if (global.win.isMinimized()) global.win.restore();
+        global.win.focus();
+      }
+    }
+  );
+}
+
 log.info('App starting...');
 global.log = log;
+
 dotenv.config({
   path: app.isPackaged ? path.join(app.getAppPath(), '.env') : '../../.env',
 });
