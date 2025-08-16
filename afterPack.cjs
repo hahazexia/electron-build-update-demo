@@ -137,7 +137,7 @@ module.exports = async () => {
     const targetDir = path.join(__dirname, './nsis_publish/Output/');
     const exefiles = await getExeFilePaths(targetDir);
 
-    console.log(exefiles, 'exefiles');
+    // console.log(exefiles, 'exefiles');
 
     try {
       await moveToDirectory(exefiles[0], dest);
