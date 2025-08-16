@@ -35,8 +35,8 @@ function hashFile(
   });
 }
 
-const res = await hashFile(installerPath, undefined, undefined, {
+const hash = await hashFile(installerPath, undefined, undefined, {
   highWaterMark: 1024 * 1024 * 10,
 });
 
-console.log(res, 'res');
+console.log(hash, 'hash');

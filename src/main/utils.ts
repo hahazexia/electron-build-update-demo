@@ -14,8 +14,8 @@ export function logErrorInfo(msg: string, error: any) {
 }
 
 export function compareVersion(v1: string, v2: string) {
-  var i;
-  var len;
+  let i;
+  let len;
 
   if (typeof v1 + typeof v2 !== 'stringstring') {
     return false;

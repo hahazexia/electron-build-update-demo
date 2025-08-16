@@ -2,6 +2,7 @@ const fsSync = require('fs');
 const path = require('path');
 const child = require('child_process');
 const fs = require('fs-extra');
+const afterAllArtifactBuild = require('./afterAllArtifactBuild.cjs');
 
 module.exports = async () => {
   async function deleteDirectory(dirPath) {
@@ -112,6 +113,58 @@ module.exports = async () => {
     }
   }
 
+  function compareVersion(v1, v2) {
+    let i;
+    let len;
+
+    if (typeof v1 + typeof v2 !== 'stringstring') {
+      return false;
+    }
+
+    let a = v1.split('.');
+    let b = v2.split('.');
+    i = 0;
+    len = Math.max(a.length, b.length);
+
+    for (; i < len; i++) {
+      if (
+        (a[i] && !b[i] && parseInt(a[i]) > 0) ||
+        parseInt(a[i]) > parseInt(b[i])
+      ) {
+        return 1;
+      } else if (
+        (b[i] && !a[i] && parseInt(b[i]) > 0) ||
+        parseInt(a[i]) < parseInt(b[i])
+      ) {
+        return -1;
+      }
+    }
+
+    return 0;
+  }
+
+  function extractVersionFromFilename(filename) {
+    const versionMatch = filename.match(/v(\d+\.\d+\.\d+\.\d+)/);
+    return versionMatch ? versionMatch[1] : null;
+  }
+
+  function sortFilesByVersion(filePaths, ascending = true) {
+    return [...filePaths].sort((pathA, pathB) => {
+      const filenameA = pathA.split(/[\\/]/).pop();
+      const filenameB = pathB.split(/[\\/]/).pop();
+
+      const versionA = extractVersionFromFilename(filenameA);
+      const versionB = extractVersionFromFilename(filenameB);
+
+      if (!versionA && !versionB) return 0;
+      if (!versionA) return 1;
+      if (!versionB) return -1;
+
+      const compareResult = compareVersion(versionA, versionB);
+      return ascending ? compareResult : -compareResult;
+    });
+  }
+
   const source = path.join(__dirname, './out/win-unpacked');
   const dest = path.join(__dirname, './nsis_publish/FilesToInstall');
   await copyDirectory(source, dest);
@@ -136,13 +189,13 @@ module.exports = async () => {
     const dest = path.join(__dirname, './out');
     const targetDir = path.join(__dirname, './nsis_publish/Output/');
     const exefiles = await getExeFilePaths(targetDir);
-
-    // console.log(exefiles, 'exefiles');
+    const sortfiles = sortFilesByVersion(exefiles, false);
 
     try {
-      await moveToDirectory(exefiles[0], dest);
+      await moveToDirectory(sortfiles[0], dest);
 
       console.log('  • move final installer file successful');
+      afterAllArtifactBuild();
     } catch (err) {
       console.log(`  • move final installer file error: ${err.message}`);
       throw err;
