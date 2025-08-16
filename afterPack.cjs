@@ -1,7 +1,7 @@
-const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
 const child = require('child_process');
+const fs = require('fs-extra');
 
 module.exports = async () => {
   async function deleteDirectory(dirPath) {
@@ -20,12 +20,10 @@ module.exports = async () => {
         await deleteDirectory(entryPath);
       } else {
         await fs.unlink(entryPath);
-        // console.log(`  • 已删除文件: ${entryPath}`);
       }
     }
 
     await fs.rmdir(dirPath);
-    // console.log(`  • 已删除目录: ${dirPath}`);
   }
 
   /**
@@ -42,7 +40,7 @@ module.exports = async () => {
     try {
       await fs.access(source);
     } catch (err) {
-      throw new Error(`  • 源目录不存在: ${source}`);
+      throw new Error(`  • source doesn't exist: ${source}`);
     }
 
     await deleteDirectory(destination);
@@ -62,7 +60,6 @@ module.exports = async () => {
           await fs.access(destPath);
 
           if (!overwrite) {
-            // console.log(`  • 文件已存在，跳过: ${destPath}`);
             continue;
           }
 
@@ -70,17 +67,55 @@ module.exports = async () => {
         } catch {}
 
         await fs.copyFile(sourcePath, destPath);
-        // console.log(`  • 已复制: ${sourcePath} -> ${destPath}`);
       }
     }
+  }
 
-    // console.log(`  • 目录复制完成: ${source} -> ${destination}`);
+  async function moveToDirectory(source, targetDir) {
+    try {
+      if (!(await fs.pathExists(source))) {
+        throw new Error(`moveToDirectory source doesn't exist: ${source}`);
+      }
+
+      const sourceName = path.basename(source);
+      const targetPath = path.join(targetDir, sourceName);
+
+      await fs.ensureDir(targetDir);
+
+      if (await fs.pathExists(targetPath)) {
+        await fs.remove(targetPath);
+        console.log(
+          `  • moveToDirectory already remove same source in targetDir: ${targetPath}`
+        );
+      }
+
+      await fs.copy(source, targetPath);
+      console.log(`  • moveToDirectory move successful: ${targetPath}`);
+    } catch (error) {
+      console.error('  • moveToDirectory move failed:', error.message);
+      throw error;
+    }
+  }
+
+  async function getExeFilePaths(targetDir) {
+    try {
+      const files = await fs.readdir(targetDir);
+
+      const exePaths = files
+        .filter(file => path.extname(file) === '.exe')
+        .map(file => path.join(targetDir, file));
+
+      return exePaths;
+    } catch (err) {
+      console.error('get .exe file failed：', err.message);
+      return [];
+    }
   }
 
   const source = path.join(__dirname, './out/win-unpacked');
   const dest = path.join(__dirname, './nsis_publish/FilesToInstall');
   await copyDirectory(source, dest);
-  console.log(`  • 目录复制完成: ${source} -> ${dest}`);
+  console.log(`  • copy win-unpacked dir successful: ${source} -> ${dest}`);
 
   const out = fsSync.openSync(path.join(__dirname, './out.log'), 'a');
   const err = fsSync.openSync(path.join(__dirname, './out.log'), 'a');
@@ -95,11 +130,26 @@ module.exports = async () => {
     cwd: batDir,
   });
 
-  ch.on('exit', code => {
-    console.log(`  • 子进程退出，代码: ${code}`);
+  ch.on('exit', async code => {
+    console.log(`  • child process exit，code: ${code}`);
+
+    const dest = path.join(__dirname, './out');
+    const targetDir = path.join(__dirname, './nsis_publish/Output/');
+    const exefiles = await getExeFilePaths(targetDir);
+
+    console.log(exefiles, 'exefiles');
+
+    try {
+      await moveToDirectory(exefiles[0], dest);
+
+      console.log('  • move final installer file successful');
+    } catch (err) {
+      console.log(`  • move final installer file error: ${err.message}`);
+      throw err;
+    }
   });
 
   ch.on('error', err => {
-    console.error('  • 子进程启动失败:', err);
+    console.error('  • child process failed:', err);
   });
 };
