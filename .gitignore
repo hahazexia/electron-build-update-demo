@@ -13,4 +13,5 @@ electron-update-setup-v1.0.0.exe
 
 nsis_publish/FilesToInstall/**/*
 nsis_publish/Output/**/*
+nsis_publish/SetupScripts/nim/skin.zip
 out.log
