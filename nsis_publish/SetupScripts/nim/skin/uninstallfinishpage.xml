@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Windows size="600,390" position="center">
+<!-- 完成 -->
+  <VerticalLayout >
+     <VerticalLayout width="250" height="250" roundcorner="5,5" bkimage="file='form\anime.png'">
+
+	</VerticalLayout>
+	<VerticalLayout bkcolor="#FFFFFFFF" >
+	<Label padding="30,30,0,0" font="8" width="200" normaltextcolor="#ff666666" text="hahazexia系统已卸载" />
+	<Button name="btnUninstalled" font="6" padding="380,40,0,0" text="完 成"  textcolor="#FFFFFFFF" bkcolor="#FF20D4B8" width="80" height="30"/>
+	</VerticalLayout>
+ </VerticalLayout>
+</Windows>

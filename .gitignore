@@ -10,3 +10,7 @@ build
 out
 
 electron-update-setup-v1.0.0.exe
+
+nsis_publish/FilesToInstall/**/*
+nsis_publish/Output/**/*
+out.log

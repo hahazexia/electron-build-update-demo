@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Windows size="600,390" position="center">
+<!-- 完成 -->
+ <VerticalLayout >
+    <VerticalLayout width="600" height="250" roundcorner="5,5" bkimage="file='form/anime.png'">
+
+	</VerticalLayout>
+	<VerticalLayout bkcolor="#FFFFFFFF" >
+	<Button name="btnRun" padding="140,50,0,0" text="" font="2" normalimage="form/ljty_normal.png" hotimage="form/ljty_normal.png" pushedimage="form/ljty_normal.png" textcolor="0xFFFFFFFF"  borderround="4,4" height="48" width="200" />
+	</VerticalLayout>
+ </VerticalLayout>
+</Windows>

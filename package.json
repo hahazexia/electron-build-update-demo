@@ -82,21 +82,27 @@
       "**/*",
       ".env",
       "package.json",
+      "!nsis_publish/**/*",
+      "!out/**/*",
       "!public",
-      "!.gitignore",
-      "!package-lock.json",
-      "!README.md",
-      "!server.js",
-      "!update.json",
-      "!tsconfig.json",
-      "!vite.*.config.ts",
       "!src",
-      "!*.exe",
+      "!.gitignore",
+      "!afterPack.cjs",
       "!*.ico",
       "!installer.nsi",
       "!License.txt",
+      "!out.log",
+      "!package-lock.json",
+      "!README.md",
       "!Readme.txt",
-      "!tsconfig.*.json"
-    ]
+      "!server.js",
+      "!sha512.js",
+      "!tsconfig.*.json",
+      "!tsconfig.json",
+      "!update.json",
+      "!vite.*.config.ts",
+      "!*.exe"
+    ],
+    "afterPack": "./afterPack.cjs"
   }
 }
