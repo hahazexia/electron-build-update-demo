@@ -1,6 +1,6 @@
 {
   "name": "electron-update",
-  "version": "0.0.18",
+  "version": "0.0.16",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -12,11 +12,12 @@
     "dev": "npm run clean && npm run dev:cjs && npm run dev:ts &&  npm run dev:copy && electron .",
     "dev:vite": "npm run build:vite && electron .",
     "clean": "rimraf ./dist",
+    "clean:build": "rimraf -g ./out/* && rimraf -g ./nsis_publish/Output/*",
     "build:es": "vite build --config vite.es.config.js",
     "build:cjs": "vite build --config vite.cjs.config.js",
     "build:vite": "npm run clean && npm run build:es && npm run build:cjs",
     "build:electron": "electron-builder build",
-    "build": "node beforePack.cjs && npm run build:vite && electron-builder build",
+    "build": "node beforePack.cjs && npm run clean:build && npm run build:vite && electron-builder build",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "server": "node server.js"
   },

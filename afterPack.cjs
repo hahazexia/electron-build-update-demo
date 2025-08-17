@@ -193,6 +193,9 @@ module.exports = async () => {
 
     try {
       await moveToDirectory(sortfiles[0], dest);
+      (async () => {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      })();
 
       console.log('  • move final installer file successful');
       afterAllArtifactBuild();
