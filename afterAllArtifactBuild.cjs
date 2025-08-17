@@ -44,19 +44,19 @@ module.exports = async () => {
   const releaseDate = new Date().toISOString();
 
   const yamlContent = `version: ${version}
-files:
-  - url: ${installerName}
+    files:
+      - url: ${installerName}
+        sha512: ${hash}
+        size: ${fileSize}
+    path: ${installerName}
     sha512: ${hash}
-    size: ${fileSize}
-path: ${installerName}
-sha512: ${hash}
-releaseDate: '${releaseDate}'`;
+    releaseDate: '${releaseDate}'`;
 
-  const ymlFilePath = path.join(__dirname, './out/latest1.yml');
+  const ymlFilePath = path.join(__dirname, './out/latest.yml');
   writeFileSync(ymlFilePath, yamlContent, 'utf8');
 
-  console.log(`Successfully generated ${ymlFilePath}`);
-  console.log(`Version: ${version}`);
-  console.log(`Installer: ${installerName}`);
-  console.log(`File size: ${fileSize} bytes`);
+  console.log(`  • Successfully generated ${ymlFilePath}`);
+  console.log(`  • Version: ${version}`);
+  console.log(`  • Installer: ${installerName}`);
+  console.log(`  • File size: ${fileSize} bytes`);
 };
