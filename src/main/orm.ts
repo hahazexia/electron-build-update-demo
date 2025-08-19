@@ -62,6 +62,15 @@ export abstract class TableModel<T extends Schema> {
     this.db = db;
   }
 
+  /**
+    CREATE TABLE IF NOT EXISTS configs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      key TEXT NOT NULL UNIQUE,
+      value TEXT NOT NULL,
+      create_at TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
+      update_at TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime'))
+    )
+   */
   static createTable(): void {
     const schema = this.schema;
     if (!schema || !this.table)
@@ -78,11 +87,17 @@ export abstract class TableModel<T extends Schema> {
       if (options.autoincrement) parts.push('AUTOINCREMENT');
       if (options.notNull) parts.push('NOT NULL');
       if (options.unique) parts.push('UNIQUE');
+
       if (options.default !== undefined) {
-        const defaultValue =
-          typeof options.default === 'string'
-            ? `'${options.default}'`
-            : options.default;
+        let defaultValue;
+        if (typeof options.default === 'object' && 'raw' in options.default) {
+          defaultValue = `(${options.default.raw})`;
+        } else {
+          defaultValue =
+            typeof options.default === 'string'
+              ? `'${options.default}'`
+              : options.default;
+        }
         parts.push(`DEFAULT ${defaultValue}`);
       }
 
@@ -109,6 +124,14 @@ export abstract class TableModel<T extends Schema> {
     return { ...data, id: result.lastInsertRowid as number };
   }
 
+  /**
+   *
+    INSERT INTO configs (key,value)
+      VALUES ('test_key','测试')
+      ON CONFLICT(key) DO UPDATE SET
+        value = EXCLUDED.value,update_at = DATETIME('now', 'localtime')
+      RETURNING *
+   */
   static upsert<T extends Schema>(
     this: ModelConstructor<T>,
     data: ExtractData<T>,
@@ -139,9 +162,12 @@ export abstract class TableModel<T extends Schema> {
       return existing ? existing : this.insert(data);
     }
 
-    const updateAssignments = updateFields.map(
-      field => `${String(field)} = EXCLUDED.${String(field)}`
-    );
+    const updateAssignments = [
+      ...updateFields.map(
+        field => `${String(field)} = EXCLUDED.${String(field)}`
+      ),
+      "update_at = DATETIME('now', 'localtime')",
+    ];
 
     const sql = `
       INSERT INTO ${this.table} (${insertFields.join(',')})
@@ -181,14 +207,41 @@ export abstract class TableModel<T extends Schema> {
     id: number,
     data: Partial<ExtractData<T>>
   ): boolean {
-    if (Object.keys(data).length === 0) return false;
+    const updateData = {
+      ...data,
+      update_at: { raw: "DATETIME('now', 'localtime')" },
+    };
 
-    const updates = Object.keys(data).map(key => `${key} = @${key}`);
+    if (Object.keys(updateData).length === 0) return false;
+
+    const updates = Object.entries(updateData).map(([key, value]) => {
+      if (typeof value === 'object' && 'raw' in value) {
+        return `${key} = ${value.raw}`;
+      }
+      return `${key} = @${key}`;
+    });
+
     const sql = `UPDATE ${this.table} SET ${updates.join(',')} WHERE id = @id`;
 
-    return this.db.prepare(sql).run({ ...data, id }).changes > 0;
+    const params = Object.entries(updateData).reduce(
+      (obj, [key, value]) => {
+        if (!(typeof value === 'object' && 'raw' in value)) {
+          obj[key] = value;
+        }
+        return obj;
+      },
+      { id } as Record<string, any>
+    );
+
+    return this.db.prepare(sql).run(params).changes > 0;
   }
 
+  /**
+   *
+    SELECT * FROM configs
+      WHERE key = 'test_key'
+      LIMIT 1
+   */
   static findOneBy<T extends Schema>(
     this: ModelConstructor<T>,
     data: Partial<ExtractData<T>>

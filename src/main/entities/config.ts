@@ -17,6 +17,16 @@ export class ConfigModel extends TableModel<ConfigSchema> {
       type: 'text',
       notNull: true,
     },
+    create_at: {
+      type: 'text',
+      notNull: true,
+      default: { raw: "DATETIME('now', 'localtime')" },
+    },
+    update_at: {
+      type: 'text',
+      notNull: true,
+      default: { raw: "DATETIME('now', 'localtime')" },
+    },
   };
 }
 
@@ -34,6 +44,16 @@ type ConfigSchema = {
   value: {
     type: 'text';
     notNull: true;
+  };
+  create_at: {
+    type: 'text';
+    notNull: true;
+    default: { raw: string } | string;
+  };
+  update_at: {
+    type: 'text';
+    notNull: true;
+    default: { raw: string };
   };
 };
 
