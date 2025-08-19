@@ -172,7 +172,7 @@ module.exports = async () => {
 
   const out = fsSync.openSync(path.join(__dirname, './out.log'), 'a');
   const err = fsSync.openSync(path.join(__dirname, './out.log'), 'a');
-  const batPath = path.join(__dirname, './nsis_publish/build-nim-nozip.bat');
+  const batPath = path.join(__dirname, './nsis_publish/build-nim.bat');
 
   const batDir = path.dirname(batPath);
 

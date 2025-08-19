@@ -30,7 +30,7 @@ module.exports = async () => {
   const packageInfo = require(packageJsonPath);
   const appName = packageInfo.name;
   const version = packageInfo.version;
-  const installerName = `${appName}_v${version}.0.exe`;
+  const installerName = `${appName}_V${version}.exe`;
 
   const installerPath = path.join(__dirname, `./out/${installerName}`);
 

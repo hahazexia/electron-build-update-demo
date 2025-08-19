@@ -1,15 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 
-function updateNsiVersion(nsiFilePath, newVersion) {
+function updateNsiVersion(nsiFilePath, newVersion, pkgVersion) {
   try {
     const fileContentBuffer = fs.readFileSync(nsiFilePath);
     let fileContent = fileContentBuffer.toString('utf16le');
     const versionRegex = /(!define PRODUCT_VERSION\s+)"[^"]+"/;
-    const updatedContent = fileContent.replace(
-      versionRegex,
-      `$1"${newVersion}"`
-    );
+    const productVersionRegex = /(!define PRODUCT_SHOW_VERSION\s+)"[^"]+"/;
+    const updatedContent = fileContent
+      .replace(versionRegex, `$1"${newVersion}"`)
+      .replace(productVersionRegex, `$1"${pkgVersion}"`);
     const contentBuffer = Buffer.from(updatedContent, 'utf16le');
     fs.writeFileSync(nsiFilePath, contentBuffer);
     console.log(
@@ -33,4 +33,4 @@ const nsiFile = path.resolve(
 const targetVersion = `${version}.0`;
 console.log(`  • targetVersion ${targetVersion}`);
 
-updateNsiVersion(nsiFile, targetVersion);
+updateNsiVersion(nsiFile, targetVersion, version);
