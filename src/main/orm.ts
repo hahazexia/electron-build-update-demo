@@ -51,6 +51,10 @@ export type ModelConstructor<T extends Schema> = {
   findAll(): DataWithId<ExtractData<T>>[];
   deleteOneBy(data: Partial<ExtractData<T>>): boolean;
   deleteAll(): number;
+  findExistingByConflictPaths(
+    data: ExtractData<T>,
+    conflictPaths: string[]
+  ): any;
 };
 
 export abstract class TableModel<T extends Schema> {
@@ -181,7 +185,7 @@ export abstract class TableModel<T extends Schema> {
     return result;
   }
 
-  private findExistingByConflictPaths<T extends Schema>(
+  static findExistingByConflictPaths<T extends Schema>(
     this: ModelConstructor<T>,
     data: ExtractData<T>,
     conflictPaths: string[]

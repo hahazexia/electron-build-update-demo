@@ -13,13 +13,10 @@ export function logErrorInfo(msg: string, error: any) {
   });
 }
 
-export function compareVersion(v1: string, v2: string) {
+type CompareVersionResult = -1 | 0 | 1;
+export function compareVersion(v1: string, v2: string): CompareVersionResult {
   let i;
   let len;
-
-  if (typeof v1 + typeof v2 !== 'stringstring') {
-    return false;
-  }
 
   let a = v1.split('.');
   let b = v2.split('.');
