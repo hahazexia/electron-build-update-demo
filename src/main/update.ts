@@ -74,7 +74,7 @@ export async function downloadAsarFile(
       try {
         await fs.promises.unlink(tmpFilePath);
       } catch (cleanupError) {
-        console.error('Cleanup failed after download error:', cleanupError);
+        logErrorInfo('Cleanup failed after download error:', cleanupError);
       }
       throw new Error(`download asar failed: ${(error as Error).message}`);
     }
