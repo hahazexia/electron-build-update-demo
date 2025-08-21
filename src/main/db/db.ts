@@ -78,7 +78,7 @@ export class DB {
   restoreBackup() {
     const backupFiles = fs.readdirSync(path.dirname(this.dbPath))
       .filter(f => f.startsWith(path.basename(this.dbPath) + '.backup-'))
-      .sort((a, b) => b.localeCompare(a)); // 按时间倒序
+      .sort((a, b) => b.localeCompare(a));
 
     if (backupFiles.length === 0) {
       log.error(`no backup DB file`);
