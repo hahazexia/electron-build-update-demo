@@ -8,7 +8,7 @@ import {
   DeleteAllConfigRes,
 } from '../db/types/config.js';
 import { logErrorInfo } from '../utils.js';
-import { ModelConstructor } from '../db/orm.js';
+import { ModelInstance } from '../db/orm.js';
 
 export default function setupDbIpcEvents(): void {
   ipcMain.handle(
@@ -16,7 +16,7 @@ export default function setupDbIpcEvents(): void {
     async (_, args: UpsertConfig): Promise<UpsertConfigRes> => {
       try {
         log.info('upsert-config');
-        const configRepository: ModelConstructor<any> =
+        const configRepository: ModelInstance<any> =
           global.db.getTable('configs');
         const upsertRes = await configRepository.upsert(args, {
           conflictPaths: ['key'],
@@ -46,7 +46,7 @@ export default function setupDbIpcEvents(): void {
     async (_, args: string): Promise<GetConfigRes> => {
       try {
         log.info('get-config');
-        const configRepository: ModelConstructor<any> =
+        const configRepository: ModelInstance<any> =
           global.db.getTable('configs');
         const findedConfig = await configRepository.findOneBy({
           key: args,
@@ -75,7 +75,7 @@ export default function setupDbIpcEvents(): void {
     async (_, args: string): Promise<DeleteConfigRes> => {
       try {
         log.info('delete-config');
-        const configRepository: ModelConstructor<any> =
+        const configRepository: ModelInstance<any> =
           global.db.getTable('configs');
         const deleteRes = await configRepository.deleteOneBy({
           key: args,
@@ -97,7 +97,7 @@ export default function setupDbIpcEvents(): void {
   ipcMain.handle('delete-all-config', async (): Promise<DeleteAllConfigRes> => {
     try {
       log.info('delete-all-config');
-      const configRepository: ModelConstructor<any> =
+      const configRepository: ModelInstance<any> =
         global.db.getTable('configs');
       const deleteRes = await configRepository.deleteAll();
 

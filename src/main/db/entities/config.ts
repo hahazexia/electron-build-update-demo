@@ -1,8 +1,8 @@
 import { TableModel, ExtractData } from '../orm.js';
 
 export class ConfigModel extends TableModel<ConfigSchema> {
-  static table = 'configs';
-  static schema: ConfigSchema = {
+  table = 'configs';
+  schema: ConfigSchema = {
     id: {
       type: 'integer',
       primary: true,

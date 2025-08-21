@@ -33,13 +33,10 @@ export type ExtractData<T extends Schema> = {
 };
 export type DataWithId<T> = T & { id: number };
 
-export type ModelConstructor<T extends Schema> = {
-  [x: string]: any;
-  new (): TableModel<T>;
-  db: sqlite.Database;
+export type ModelInstance<T extends Schema> = {
+  readonly db: sqlite.Database;
   table: string;
-  schema: T;
-  setDB(db: sqlite.Database): void;
+  schema: Schema;
   createTable(): void;
   insert(data: ExtractData<T>): DataWithId<ExtractData<T>>;
   upsert(
@@ -54,30 +51,22 @@ export type ModelConstructor<T extends Schema> = {
   findExistingByConflictPaths(
     data: ExtractData<T>,
     conflictPaths: string[]
-  ): any;
+  ): DataWithId<ExtractData<T>> | null;
 };
 
-export abstract class TableModel<T extends Schema> {
-  static table: string;
-  static schema: Schema;
-  static db: sqlite.Database;
+export abstract class TableModel<T extends Schema> implements ModelInstance<T> {
+  abstract table: string;
+  abstract schema: Schema;
+  public db: sqlite.Database;
 
-  static setDB(db: sqlite.Database) {
+  constructor(db: sqlite.Database) {
     this.db = db;
   }
 
-  /**
-    CREATE TABLE IF NOT EXISTS configs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      key TEXT NOT NULL UNIQUE,
-      value TEXT NOT NULL,
-      create_at TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime')),
-      update_at TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime'))
-    )
-   */
-  static createTable(): void {
+  createTable(): void {
     const schema = this.schema;
-    if (!schema || !this.table)
+    const table = this.table;
+    if (!schema || !table)
       throw new Error('createTable Schema or table name not defined');
 
     const fields: string[] = [];
@@ -108,16 +97,13 @@ export abstract class TableModel<T extends Schema> {
       fields.push(parts.join(' '));
     }
 
-    const sql = `CREATE TABLE IF NOT EXISTS ${this.table} (
+    const sql = `CREATE TABLE IF NOT EXISTS ${table} (
       ${fields.join(',\n  ')}
     )`;
     this.db.prepare(sql).run();
   }
 
-  static insert<T extends Schema>(
-    this: ModelConstructor<T>,
-    data: ExtractData<T>
-  ): DataWithId<ExtractData<T>> {
+  insert(data: ExtractData<T>): DataWithId<ExtractData<T>> {
     const fields = Object.keys(data) as (keyof ExtractData<T>)[];
     const placeholders = fields.map(field => `@${String(field)}`);
 
@@ -128,16 +114,7 @@ export abstract class TableModel<T extends Schema> {
     return { ...data, id: result.lastInsertRowid as number };
   }
 
-  /**
-   *
-    INSERT INTO configs (key,value)
-      VALUES ('test_key','测试')
-      ON CONFLICT(key) DO UPDATE SET
-        value = EXCLUDED.value,update_at = DATETIME('now', 'localtime')
-      RETURNING *
-   */
-  static upsert<T extends Schema>(
-    this: ModelConstructor<T>,
+  upsert(
     data: ExtractData<T>,
     options: UpsertOptions
   ): DataWithId<ExtractData<T>> {
@@ -185,8 +162,7 @@ export abstract class TableModel<T extends Schema> {
     return result;
   }
 
-  static findExistingByConflictPaths<T extends Schema>(
-    this: ModelConstructor<T>,
+  findExistingByConflictPaths(
     data: ExtractData<T>,
     conflictPaths: string[]
   ): DataWithId<ExtractData<T>> | null {
@@ -206,11 +182,7 @@ export abstract class TableModel<T extends Schema> {
     > | null;
   }
 
-  static update<T extends Schema>(
-    this: ModelConstructor<T>,
-    id: number,
-    data: Partial<ExtractData<T>>
-  ): boolean {
+  update(id: number, data: Partial<ExtractData<T>>): boolean {
     const updateData = {
       ...data,
       update_at: { raw: "DATETIME('now', 'localtime')" },
@@ -240,16 +212,7 @@ export abstract class TableModel<T extends Schema> {
     return this.db.prepare(sql).run(params).changes > 0;
   }
 
-  /**
-   *
-    SELECT * FROM configs
-      WHERE key = 'test_key'
-      LIMIT 1
-   */
-  static findOneBy<T extends Schema>(
-    this: ModelConstructor<T>,
-    data: Partial<ExtractData<T>>
-  ): DataWithId<ExtractData<T>> | null {
+  findOneBy(data: Partial<ExtractData<T>>): DataWithId<ExtractData<T>> | null {
     const entries = Object.entries(data);
     if (entries.length === 0) {
       throw new Error('findOneBy query conditions cannot be null');
@@ -278,17 +241,12 @@ export abstract class TableModel<T extends Schema> {
     return result || null;
   }
 
-  static findAll<T extends Schema>(
-    this: ModelConstructor<T>
-  ): DataWithId<ExtractData<T>>[] {
+  findAll(): DataWithId<ExtractData<T>>[] {
     const sql = `SELECT * FROM ${this.table}`;
     return this.db.prepare(sql).all() as DataWithId<ExtractData<T>>[];
   }
 
-  static deleteOneBy<T extends Schema>(
-    this: ModelConstructor<T>,
-    data: Partial<ExtractData<T>>
-  ): boolean {
+  deleteOneBy(data: Partial<ExtractData<T>>): boolean {
     const entries = Object.entries(data);
     if (entries.length === 0) {
       throw new Error('deleteOneBy query conditions cannot be null');
@@ -314,7 +272,7 @@ export abstract class TableModel<T extends Schema> {
     return this.db.prepare(sql).run(data).changes > 0;
   }
 
-  static deleteAll<T extends Schema>(this: ModelConstructor<T>): number {
+  deleteAll(): number {
     const sql = `DELETE FROM ${this.table}`;
 
     const result = this.db.prepare(sql).run();

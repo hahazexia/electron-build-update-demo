@@ -1,8 +1,8 @@
 import { TableModel, ExtractData } from '../orm.js';
 
 export class DBVersionModel extends TableModel<DBVersionSchema> {
-  static table = 'db_version';
-  static schema: DBVersionSchema = {
+  table = 'db_version';
+  schema: DBVersionSchema = {
     version: {
       type: 'text',
       primary: true,

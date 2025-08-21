@@ -6,12 +6,12 @@ import path from 'node:path';
 import fs from 'node:fs';
 import { compareVersion } from '../utils.js';
 import { logErrorInfo } from '../utils.js';
-import { ModelConstructor } from './orm.js';
+import { ModelInstance } from './orm.js';
 import { migrations } from './migrations.js';
 
 type TableMap = {
-  configs: ConfigModel;
-  db_version: DBVersionModel;
+  configs: ModelInstance<any>;
+  db_version: ModelInstance<any>;
 };
 
 type NeedUpgrade = {
@@ -24,7 +24,7 @@ export class DB {
   dbPath: string;
   currentDBVersion: string | undefined;
   backupDBForUpgradePath: string | undefined;
-  tables: Map<keyof TableMap, ModelConstructor<any>> = new Map();
+  tables: Map<keyof TableMap, ModelInstance<any>> = new Map();
 
   constructor(options: sqlite.Options) {
     const dbPath = this.getDatabasePath();
@@ -33,16 +33,15 @@ export class DB {
     this.dbPath = dbPath;
   }
 
-  init(models: ModelConstructor<any>[]) {
-    models.forEach((model: ModelConstructor<any>) => {
-      model.setDB(this.db);
-      model.createTable();
-      this.tables.set(model.table as keyof TableMap, model);
+  init(models: ModelInstance<any>[]) {
+    models.forEach((instance: ModelInstance<any>) => {
+      instance.createTable();
+      this.tables.set(instance.table as keyof TableMap, instance);
     });
   }
 
-  getTable<K extends keyof TableMap>(name: K): ModelConstructor<any> {
-    return this.tables.get(name) as ModelConstructor<any>;
+  getTable<K extends keyof TableMap>(name: K): ModelInstance<any> {
+    return this.tables.get(name) as ModelInstance<any>;
   }
 
   getDatabasePath(): string {
@@ -101,8 +100,7 @@ export class DB {
   }
 
   checkUpgrade(): NeedUpgrade {
-    const dbVersionRepository: ModelConstructor<any> =
-      this.getTable('db_version');
+    const dbVersionRepository: ModelInstance<any> = this.getTable('db_version');
     const allDBVersions = dbVersionRepository.findAll();
     log.info(`db upgrade allDBVersions: ${JSON.stringify(allDBVersions)}`);
 
@@ -138,6 +136,17 @@ export class DB {
 
     if (sortMigrations.length <= 0) {
       log.info(`db current is latest version`);
+      if (this.backupDBForUpgradePath) {
+        fs.promises
+          .unlink(this.backupDBForUpgradePath)
+          .then()
+          .catch(err => {
+            logErrorInfo(
+              `db current is latest version unlink backup failed`,
+              err
+            );
+          });
+      }
       return {
         res: false,
         migrations: [],
@@ -152,7 +161,7 @@ export class DB {
   upgrade() {
     const { res, migrations } = this.checkUpgrade();
     if (res) {
-      const dbVersionRepository: ModelConstructor<any> =
+      const dbVersionRepository: ModelInstance<any> =
         this.getTable('db_version');
 
       let hasErr: boolean = false;
@@ -188,6 +197,17 @@ export class DB {
           }
         );
         this.currentDBVersion = newVersion;
+        if (this.backupDBForUpgradePath) {
+          fs.promises
+            .unlink(this.backupDBForUpgradePath)
+            .then()
+            .catch(err => {
+              logErrorInfo(
+                `db current is latest version unlink backup failed`,
+                err
+              );
+            });
+        }
       } else {
         this.restoreBackup();
       }
@@ -206,11 +226,13 @@ export function initializeDatabase(): null | DB {
     db = new DB({ verbose: global.log.info });
     db.backupDBForUpgrade()
       .then(() => {
-        db.init([ConfigModel, DBVersionModel]);
+        db.init([new ConfigModel(db.db), new DBVersionModel(db.db)]);
         db.upgrade();
       })
       .catch(err => {
         logErrorInfo(`backupDBForUpgrade err`, err);
+        db.init([new ConfigModel(db.db), new DBVersionModel(db.db)]);
+        db.upgrade();
       });
   } catch (err) {
     logErrorInfo('db initialize failed', err);
