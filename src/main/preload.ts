@@ -5,7 +5,7 @@ import {
   GetConfigRes,
   DeleteConfigRes,
   DeleteAllConfigRes,
-} from './types/config.js';
+} from './db/types/config.js';
 
 contextBridge.exposeInMainWorld('ipc', {
   checkUpdate: (): void => {

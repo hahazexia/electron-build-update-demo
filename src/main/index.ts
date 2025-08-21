@@ -1,10 +1,10 @@
 import { app, BrowserWindow, Menu } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { initializeDatabase } from './db.js';
+import { initializeDatabase } from './db/db.js';
 import { initFullUpdate } from './update.js';
-import setupDbIpcEvents from './dbIpc.js';
-import setupIpcEvents from './ipc.js';
+import setupDbIpcEvents from './ipcs/dbIpc.js';
+import setupIpcEvents from './ipcs/ipc.js';
 import log from './logger.js';
 import dotenv from 'dotenv';
 

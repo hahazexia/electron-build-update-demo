@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import { DB } from '../db.ts';
+import { DB } from '../db/db';
 
 declare global {
   var log: any;

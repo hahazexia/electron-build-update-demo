@@ -17,7 +17,7 @@
     "build:cjs": "vite build --config vite.cjs.config.js",
     "build:vite": "npm run clean && npm run build:es && npm run build:cjs",
     "build:electron": "electron-builder build",
-    "build": "node beforePack.cjs && npm run clean:build && npm run build:vite && electron-builder build",
+    "build": "node ./scripts/beforePack.cjs && npm run clean:build && npm run build:vite && electron-builder build",
     "rebuild": "electron-rebuild -f -w better-sqlite3",
     "server": "node server.js"
   },
@@ -86,6 +86,7 @@
       "!nsis_publish/**/*",
       "!out/**/*",
       "!public",
+      "!scripts",
       "!src",
       "!.gitignore",
       "!afterAllArtifactBuild.cjs",
@@ -106,6 +107,6 @@
       "!vite.*.config.ts",
       "!*.exe"
     ],
-    "afterPack": "./afterPack.cjs"
+    "afterPack": "./scripts/afterPack.cjs"
   }
 }
