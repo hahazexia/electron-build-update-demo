@@ -4,17 +4,14 @@ const migrations = [
   {
     version: '0.0.19',
     up: (db: sqlite.Database) => {
-      const upgrade = db.transaction(() => {
-        db.exec(`
+      db.exec(`
           ALTER TABLE configs
           ADD COLUMN create_at TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime'))
         `);
-        db.exec(`
+      db.exec(`
           ALTER TABLE configs
           ADD COLUMN update_at TEXT NOT NULL DEFAULT (DATETIME('now', 'localtime'))
         `);
-      });
-      upgrade();
     },
   },
 ];
